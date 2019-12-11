@@ -1,6 +1,6 @@
 # split-go-serializer
 
-A GO module which fetches split definitions and segments from Split.io and serializes them into a set of strings that the GO SDK can consume.
+A Go module which fetches split definitions and segments from Split.io and serializes them into a set of strings that the GO SDK can consume.
 
 ## Setting Up Dev Environment
 

@@ -7,8 +7,5 @@ script:
   - go get golang.org/x/lint/golint
   - go get github.com/axw/gocov/gocov
   - GO111MODULE=off go get gopkg.in/matm/v1/gocov-html
-  - golint  -set_exit_status ./...
-  - go vet ./...
-  - ./scripts/test.sh -i
-  - ./scripts/coverage-html.sh cover.out > coverage.html
+  - ./scripts/test.sh
 install: true
