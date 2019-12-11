@@ -24,12 +24,8 @@ Use this script to run linting, vetting, unit tests, and coverage check:
 ```
 $ ./scripts/test.sh
 ```
-Add the `-i` option to do all of the above and run the integration tests:
-```
-$ ./scripts/test.sh -i
-```
 
-After running either of the above scripts, run this script to generate coverage HTML file:
+After running the above script, run this script to generate coverage HTML file:
 ```
 $ ./scripts/coverage-html.sh cover.out > coverage.html
 ```

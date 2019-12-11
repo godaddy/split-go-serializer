@@ -3,7 +3,7 @@ package serializer
 import (
 	"testing"
 
-	"github.com/godaddy/split-go-serializer/binding"
+	"github.com/godaddy/split-go-serializer/api"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +18,7 @@ func TestNewSerializerValid(t *testing.T) {
 	result := NewSerializer(testKey, pollingRateSeconds, serializeSegments)
 
 	assert.Equal(t, result.splitioAPIKey, testKey)
-	assert.IsType(t, result.splitioAPIBinding, binding.SplitioAPIBinding{})
+	assert.IsType(t, result.splitioAPIBinding, api.SplitioAPIBinding{})
 	assert.Equal(t, result.pollingRateSeconds, pollingRateSeconds)
 	assert.Equal(t, result.serializeSegments, serializeSegments)
 

@@ -3,13 +3,13 @@ package serializer
 import (
 	"fmt"
 
-	"github.com/godaddy/split-go-serializer/binding"
+	"github.com/godaddy/split-go-serializer/api"
 )
 
 // Serializer contains splitioAPIBinding
 type Serializer struct {
 	splitioAPIKey      string
-	splitioAPIBinding  binding.SplitioAPIBinding
+	splitioAPIBinding  api.SplitioAPIBinding
 	pollingRateSeconds int
 	serializeSegments  bool
 }
@@ -19,7 +19,7 @@ func NewSerializer(splitioAPIKey string, pollingRateSeconds int, serializeSegmen
 	if pollingRateSeconds == 0 {
 		pollingRateSeconds = 300
 	}
-	splitioAPIBinding := binding.NewSplitioAPIBinding(splitioAPIKey)
+	splitioAPIBinding := api.NewSplitioAPIBinding(splitioAPIKey)
 
 	return &Serializer{splitioAPIKey, *splitioAPIBinding, pollingRateSeconds, serializeSegments}
 }
