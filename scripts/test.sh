@@ -12,4 +12,4 @@ echo "OK"
 
 echo "Running unit tests:"
 go test ./... -coverprofile cover.out && go tool cover -func cover.out
-sh ./script/coverage-check.sh cover.out
+sh ./scripts/coverage-check.sh cover.out

@@ -29,10 +29,10 @@ func TestGetSegmentChangesReturnsError(t *testing.T) {
 	assert.EqualError(t, err, "not implemented")
 }
 
-func TestGetSplitDataReturnsError(t *testing.T) {
+func TestGetSplitChangesReturnsError(t *testing.T) {
 
 	result := NewSplitioAPIBinding(testKey)
-	err := result.GetSplitData()
+	err := result.GetSplitChanges()
 
 	assert.EqualError(t, err, "not implemented")
 }

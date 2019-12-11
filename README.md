@@ -22,16 +22,16 @@ A GO module which fetches split definitions and segments from Split.io and seria
 
 Use this script to run linting, vetting, unit tests, and coverage check:
 ```
-$ ./script/test.sh
+$ ./scripts/test.sh
 ```
 Add the `-i` option to do all of the above and run the integration tests:
 ```
-$ ./script/test.sh -i
+$ ./scripts/test.sh -i
 ```
 
 After running either of the above scripts, run this script to generate coverage HTML file:
 ```
-$ ./script/coverage-html.sh cover.out > coverage.html
+$ ./scripts/coverage-html.sh cover.out > coverage.html
 ```
 This HTML file is useful because it highlights exact lines of code that aren't covered by tests.
 

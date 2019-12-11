@@ -22,7 +22,7 @@ func (binding *SplitioAPIBinding) GetSegmentChanges() error {
 	return fmt.Errorf("not implemented")
 }
 
-// GetSplitData will get split data
-func (binding *SplitioAPIBinding) GetSplitData() error {
+// GetSplitChanges will get split data
+func (binding *SplitioAPIBinding) GetSplitChanges() error {
 	return fmt.Errorf("not implemented")
 }
