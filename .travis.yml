@@ -1,0 +1,15 @@
+sudo: false
+language: go
+go:
+ - "1.13.x"
+script:
+  - go get ./...
+  - go get golang.org/x/lint/golint
+  - go get github.com/axw/gocov/gocov
+  - GO111MODULE=off go get gopkg.in/matm/v1/gocov-html
+  - golint  -set_exit_status ./...
+  - go vet ./...
+  - ./script/test.sh -i
+  - ./script/coverage-html.sh cover.out > coverage.html
+install: true
+
