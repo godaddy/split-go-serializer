@@ -9,6 +9,6 @@ script:
   - GO111MODULE=off go get gopkg.in/matm/v1/gocov-html
   - golint  -set_exit_status ./...
   - go vet ./...
-  - ./script/test.sh -i
-  - ./script/coverage-html.sh cover.out > coverage.html
+  - ./scripts/test.sh -i
+  - ./scripts/coverage-html.sh cover.out > coverage.html
 install: true
