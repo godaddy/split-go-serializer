@@ -12,4 +12,3 @@ script:
   - ./script/test.sh -i
   - ./script/coverage-html.sh cover.out > coverage.html
 install: true
-
