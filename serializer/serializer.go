@@ -19,7 +19,7 @@ func NewSerializer(splitioAPIKey string, pollingRateSeconds int, serializeSegmen
 	if pollingRateSeconds == 0 {
 		pollingRateSeconds = 300
 	}
-	splitioAPIBinding := api.NewSplitioAPIBinding(splitioAPIKey)
+	splitioAPIBinding := api.NewSplitioAPIBinding(splitioAPIKey, "")
 
 	return &Serializer{splitioAPIKey, *splitioAPIBinding, pollingRateSeconds, serializeSegments}
 }
