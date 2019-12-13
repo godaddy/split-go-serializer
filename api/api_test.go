@@ -38,7 +38,7 @@ func TestHttpGetReturnsSuccessfulResponse(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	path := "/mockPath"
+	path := "mockPath"
 	since := -1
 
 	// Act
@@ -60,7 +60,7 @@ func TestHttpGetReturnsErrorOnNonOKResponse(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	path := "/mockPath"
+	path := "mockPath"
 	since := -1
 
 	// Act
@@ -74,8 +74,8 @@ func TestHttpGetReturnsErrorOnNonOKResponse(t *testing.T) {
 
 func TestHttpGetReturnsNewRequestError(t *testing.T) {
 	// Arrange
-	badURI := "::"
-	path := "/mockPath"
+	badURI := ":"
+	path := "mockPath"
 	since := -1
 
 	// Act
@@ -83,22 +83,7 @@ func TestHttpGetReturnsNewRequestError(t *testing.T) {
 	result, err := apiBinding.httpGet(path, since)
 
 	// Validate that httpGet function returns new request error
-	assert.EqualError(t, err, "Errored when initiate http new request. parse ::/mockPath: missing protocol scheme")
-	assert.Equal(t, result, map[string]interface{}{})
-}
-
-func TestHttpGetReturnsErrorWhenSendingRequest(t *testing.T) {
-	// Arrange
-	badURI := "mock.com"
-	path := "/mockPath"
-	since := -1
-
-	// Act
-	apiBinding := NewSplitioAPIBinding(mockSplitioAPIKey, badURI)
-	result, err := apiBinding.httpGet(path, since)
-
-	// Validate that httpGet function returns new request error
-	assert.EqualError(t, err, "Errored when sending request to the server Get mock.com/mockPath?since=%EF%BF%BD: unsupported protocol scheme \"\"")
+	assert.EqualError(t, err, "Http get request error: parse :/mockPath: missing protocol scheme")
 	assert.Equal(t, result, map[string]interface{}{})
 }
 
