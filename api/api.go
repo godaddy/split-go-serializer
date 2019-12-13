@@ -56,7 +56,11 @@ func (binding *SplitioAPIBinding) httpGet(path string, since int) (map[string]in
 	var data map[string]interface{}
 	decoder := json.NewDecoder(strings.NewReader(string(resp.Body())))
 	decoder.UseNumber()
-	decoder.Decode(&data)
+	err = decoder.Decode(&data)
+	if err != nil {
+		err = fmt.Errorf("Decode error: %s", err)
+		return map[string]interface{}{}, err
+	}
 
 	return data, nil
 }

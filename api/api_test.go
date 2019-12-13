@@ -87,6 +87,25 @@ func TestHttpGetReturnsNewRequestError(t *testing.T) {
 	assert.Equal(t, result, map[string]interface{}{})
 }
 
+func TestHttpGetReturnsDecodeError(t *testing.T) {
+	// Arrange
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, `invalid-response`)
+	}))
+	defer testServer.Close()
+
+	path := "mockPath"
+	since := -1
+
+	// Act
+	apiBinding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
+	result, err := apiBinding.httpGet(path, since)
+
+	// Validate that httpGet function returns new request error
+	assert.EqualError(t, err, "Decode error: invalid character 'i' looking for beginning of value")
+	assert.Equal(t, result, map[string]interface{}{})
+}
+
 func TestGetSegmentChangesReturnsError(t *testing.T) {
 	// Act
 	result := NewSplitioAPIBinding(mockSplitioAPIKey, mockSplitioAPIURI)
