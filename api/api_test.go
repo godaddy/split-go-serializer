@@ -39,6 +39,7 @@ func TestHttpGetReturnsSuccessfulResponse(t *testing.T) {
 	defer testServer.Close()
 
 	path := "mockPath"
+	segment := "mockSegment"
 	since := -1
 
 	// Act
@@ -46,7 +47,7 @@ func TestHttpGetReturnsSuccessfulResponse(t *testing.T) {
 		"data": "fake splitio json string",
 	}
 	binding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
-	result, err := binding.httpGet(path, since)
+	result, err := binding.httpGet(path, segment, since)
 
 	// Validate that httpGet function returns correct data and empty error
 	assert.Equal(t, result, expectedData)
@@ -61,11 +62,12 @@ func TestHttpGetReturnsErrorOnNonOKResponse(t *testing.T) {
 	defer testServer.Close()
 
 	path := "mockPath"
+	segment := "mockSegment"
 	since := -1
 
 	// Act
 	apiBinding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
-	result, err := apiBinding.httpGet(path, since)
+	result, err := apiBinding.httpGet(path, segment, since)
 
 	// Validate that httpGet function returns unsuccessful error
 	assert.EqualError(t, err, "Non-OK HTTP status: 404 Not Found")
@@ -76,14 +78,15 @@ func TestHttpGetReturnsNewRequestError(t *testing.T) {
 	// Arrange
 	badURI := ":"
 	path := "mockPath"
+	segment := "mockSegment"
 	since := -1
 
 	// Act
 	apiBinding := NewSplitioAPIBinding(mockSplitioAPIKey, badURI)
-	result, err := apiBinding.httpGet(path, since)
+	result, err := apiBinding.httpGet(path, segment, since)
 
 	// Validate that httpGet function returns new request error
-	assert.EqualError(t, err, "Http get request error: parse :/mockPath: missing protocol scheme")
+	assert.EqualError(t, err, "Http get request error: parse :/mockPath/mockSegment: missing protocol scheme")
 	assert.Equal(t, result, map[string]interface{}{})
 }
 
@@ -95,11 +98,12 @@ func TestHttpGetReturnsDecodeError(t *testing.T) {
 	defer testServer.Close()
 
 	path := "mockPath"
+	segment := "mockSegment"
 	since := -1
 
 	// Act
 	apiBinding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
-	result, err := apiBinding.httpGet(path, since)
+	result, err := apiBinding.httpGet(path, segment, since)
 
 	// Validate that httpGet function returns new request error
 	assert.EqualError(t, err, "Decode error: invalid character 'i' looking for beginning of value")
