@@ -3,7 +3,7 @@ package serializer
 import (
 	"testing"
 
-	"github.com/godaddy/split-go-serializer/api"
+	"github.com/godaddy/split-go-serializer/poller"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,21 +21,9 @@ func TestNewSerializerValid(t *testing.T) {
 
 	// Validate that returned Serializer has the correct type and values
 	assert.Equal(t, result.splitioAPIKey, testKey)
-	assert.IsType(t, result.splitioAPIBinding, api.SplitioAPIBinding{})
-	assert.Equal(t, result.pollingRateSeconds, pollingRateSeconds)
-	assert.Equal(t, result.serializeSegments, serializeSegments)
-}
-
-func TestNewSerializerDefaultPollingRateSeconds(t *testing.T) {
-	// Arrange
-	pollingRateSeconds := 0
-
-	// Act
-	result := NewSerializer(testKey, pollingRateSeconds, serializeSegments)
-	expectedPollingRateSeconds := 300
-
-	// Validate that returned Serializer has the correct default polling rate seconds
-	assert.Equal(t, result.pollingRateSeconds, expectedPollingRateSeconds)
+	assert.IsType(t, result.poller, poller.Poller{})
+	assert.Equal(t, result.poller.PollingRateSeconds, pollingRateSeconds)
+	assert.Equal(t, result.poller.SerializeSegments, serializeSegments)
 }
 
 func TestGetSerializedDataReturnsError(t *testing.T) {
