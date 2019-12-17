@@ -23,8 +23,8 @@ func TestNewPollerValid(t *testing.T) {
 	// Validate that returned Poller has the correct type and values
 	assert.Equal(t, result.PollingRateSeconds, pollingRateSeconds)
 	assert.Equal(t, result.SerializeSegments, serializeSegments)
+	assert.Equal(t, result.Cache, "")
 	assert.IsType(t, result.SplitioAPIBinding, api.SplitioAPIBinding{})
-	assert.IsType(t, result.Cache, "")
 }
 
 func TestNewSerializerDefaultPollingRateSeconds(t *testing.T) {
