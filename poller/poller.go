@@ -31,10 +31,10 @@ func (poller *Poller) pollForChanges() error {
 	return nil
 }
 
-// Poll creates a goroutine and keep tracking until it stops
-func (poller *Poller) Poll() {
+// Start creates a goroutine and keep tracking until it stops
+func (poller *Poller) Start() {
+	poller.pollForChanges()
 	go poller.jobs()
-	time.Sleep(2 * time.Second)
 }
 
 // Stop sets quit to true in order to stop the loop

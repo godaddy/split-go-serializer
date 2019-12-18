@@ -52,16 +52,16 @@ func TestPollforChangesValid(t *testing.T) {
 	assert.Equal(t, "data from splitChanges and segmentChanges", result.Cache)
 }
 
-func TestPollValid(t *testing.T) {
+func TestStartValid(t *testing.T) {
 	// Arrange
 	pollingRateSeconds := 1
 
 	//Act
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
 
-	// Validate that after calling Poll the cache is updated
+	// Validate that after calling Start the cache is updated
 	assert.Equal(t, result.Cache, "")
-	result.Poll()
+	result.Start()
 	assert.Equal(t, result.Cache, "data from splitChanges and segmentChanges")
 }
 
@@ -74,7 +74,6 @@ func TestJobsValid(t *testing.T) {
 
 	// Validate that jobs function triggers pollForChanges and updates the cache
 	assert.Equal(t, result.Cache, "")
-	// time.AfterFunc(3*time.Second, func() { result.Stop() })
 	go result.jobs()
 	time.Sleep(2 * time.Second)
 	result.quit <- true
@@ -91,6 +90,7 @@ func TestStopValid(t *testing.T) {
 	// Validate that when Stop is called, jobs will stop
 	assert.Equal(t, result.Cache, "")
 	time.AfterFunc(3*time.Second, func() { result.Stop() })
+	// jobs is an infinite loop, and expect to stop after Stop is called
 	result.jobs()
 	assert.Equal(t, result.Cache, "data from splitChanges and segmentChanges")
 }
