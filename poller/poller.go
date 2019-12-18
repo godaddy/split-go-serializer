@@ -44,7 +44,7 @@ func (poller *Poller) Stop() {
 
 // jobs controls whether keep or stop running
 func (poller *Poller) jobs() {
-	ticker := time.NewTicker(time.Duration(poller.PollingRateSeconds) * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(poller.PollingRateSeconds) * time.Second)
 	for {
 		select {
 		case <-poller.quit:
