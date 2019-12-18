@@ -1,8 +1,9 @@
 package poller
 
 import (
+	"time"
+
 	"github.com/godaddy/split-go-serializer/api"
-	"github.com/jasonlvhit/gocron"
 )
 
 // Poller contains cache data and SplitioAPIBinding
@@ -43,15 +44,15 @@ func (poller *Poller) Stop() {
 
 // jobs controls whether keep or stop running
 func (poller *Poller) jobs() {
+	ticker := time.NewTicker(time.Duration(poller.PollingRateSeconds) * time.Millisecond)
 	for {
-		g := gocron.NewScheduler()
-		g.Every(uint64(poller.PollingRateSeconds)).Seconds().Do(poller.pollForChanges)
 		select {
 		case <-poller.quit:
-			g.Clear()
+			ticker.Stop()
 			close(poller.quit)
 			return
-		case <-g.Start():
+		case <-ticker.C:
+			poller.pollForChanges()
 		}
 	}
 }

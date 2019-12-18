@@ -15,12 +15,12 @@ const (
 func TestNewSerializerValid(t *testing.T) {
 	// Arrange
 	pollingRateSeconds := 400
+	testPoller := poller.NewPoller(testKey, pollingRateSeconds, serializeSegments)
 
 	// Act
-	result := NewSerializer(testKey, pollingRateSeconds, serializeSegments)
+	result := NewSerializer(testPoller)
 
 	// Validate that returned Serializer has the correct type and values
-	assert.Equal(t, result.splitioAPIKey, testKey)
 	assert.IsType(t, result.poller, poller.Poller{})
 	assert.Equal(t, result.poller.PollingRateSeconds, pollingRateSeconds)
 	assert.Equal(t, result.poller.SerializeSegments, serializeSegments)
@@ -29,9 +29,10 @@ func TestNewSerializerValid(t *testing.T) {
 func TestGetSerializedDataReturnsError(t *testing.T) {
 	// Arrange
 	pollingRateSeconds := 400
+	testPoller := poller.NewPoller(testKey, pollingRateSeconds, serializeSegments)
 
 	// Act
-	result := NewSerializer(testKey, pollingRateSeconds, serializeSegments)
+	result := NewSerializer(testPoller)
 	err := result.GetSerializedData()
 
 	// Validate that GetSerializedData function returns the error
