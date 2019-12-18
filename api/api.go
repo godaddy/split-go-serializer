@@ -8,14 +8,70 @@ import (
 	"strings"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/mitchellh/mapstructure"
 )
 
-const splitioAPIUri = "https://sdk.split.io/api"
+const (
+	splitioAPIUri        = "https://sdk.split.io/api"
+	firstRequestSince    = -1
+	defaultMaxRequestNum = 100
+)
 
 // SplitioAPIBinding contains splitioAPIKey
 type SplitioAPIBinding struct {
 	splitioAPIKey string
 	splitioAPIUri string
+}
+
+// splitResponse contains the response for splitChange end point
+type splitResponse struct {
+	Splits []Split
+	Since  int
+	Till   int
+}
+
+// Split struct contains info for a split
+type Split struct {
+	Name                  string
+	Seed                  int
+	Status                string
+	Killed                bool
+	DefaultTreatment      string
+	Conditions            []Condition
+	Configurations        map[string]interface{}
+	ChangeNumber          int
+	TrafficAllocation     int
+	TrafficAllocationSeed int
+	TrafficTypeName       string
+	Alog                  int
+}
+
+// Condition contains conditions for the split
+type Condition struct {
+	ConditionType string
+	MatcherGroup  MatcherGroup
+	Partitions    []map[string]interface{}
+	Label         string
+}
+
+// MatcherGroup contains logical combiner and a list of matchers
+type MatcherGroup struct {
+	Combiner string
+	Matchers []Matcher
+}
+
+// Matcher contains matcher info
+type Matcher struct {
+	KeySelector                   map[string]interface{}
+	MatcherType                   string
+	Negate                        bool
+	UserDefinedSegmentMatcherData map[string]string
+	WhitelistMatcherData          interface{}
+	UnaryNumericMatcherData       interface{}
+	BetweenMatcherData            interface{}
+	BooleanMatcherData            interface{}
+	DependencyMatcherData         bool
+	StringMatcherData             string
 }
 
 // NewSplitioAPIBinding returns a new SplitioAPIBinding
@@ -24,6 +80,44 @@ func NewSplitioAPIBinding(apiKey string, apiURL string) *SplitioAPIBinding {
 		apiURL = splitioAPIUri
 	}
 	return &SplitioAPIBinding{apiKey, apiURL}
+}
+
+// GetSplits gets the split data
+func (binding *SplitioAPIBinding) GetSplits() ([]Split, int, error) {
+	path := "splitChanges"
+	splitsMap := map[string]Split{}
+	splits := []Split{}
+	allChanges, since, err := binding.getAllChanges(path, "")
+	if err != nil {
+		return nil, 0, err
+	}
+
+	for _, changes := range allChanges {
+		var result splitResponse
+		err = mapstructure.Decode(changes, &result)
+		if err != nil {
+			err = fmt.Errorf("error when decode data to split: %s", err)
+			return nil, 0, err
+		}
+
+		for _, split := range result.Splits {
+			if split.Status == "ARCHIVED" {
+				delete(splitsMap, split.Name)
+			} else {
+				splitsMap[split.Name] = split
+			}
+		}
+	}
+
+	for _, split := range splitsMap {
+		splits = append(splits, split)
+	}
+	return splits, since, nil
+}
+
+// GetSegmentChanges will get segment data
+func (binding *SplitioAPIBinding) GetSegmentChanges() error {
+	return fmt.Errorf("not implemented")
 }
 
 // httpGet makes a GET request to the Split.io SDK API.
@@ -68,12 +162,30 @@ func (binding *SplitioAPIBinding) httpGet(path string, segment string, since int
 	return data, nil
 }
 
-// GetSegmentChanges will get segment data
-func (binding *SplitioAPIBinding) GetSegmentChanges() error {
-	return fmt.Errorf("not implemented")
-}
+// getAllChanges polls the Split.io API until since and till are the same
+// path is the path of the HTTP request e.g "splitChanges", "segmentChanges"
+// segment is the segment name, will be empty when the end point is splitChanges
+func (binding *SplitioAPIBinding) getAllChanges(path string, segment string) ([]map[string]interface{}, int, error) {
+	since := firstRequestSince
+	requestCount := 0
+	allChanges := []map[string]interface{}{}
+	for requestCount < defaultMaxRequestNum {
+		results, err := binding.httpGet(path, segment, since)
+		if err != nil {
+			return allChanges, 0, err
+		}
+		till, err := strconv.Atoi(results["till"].(json.Number).String())
+		if err != nil {
+			return allChanges, 0, err
+		}
 
-// GetSplitChanges will get split data
-func (binding *SplitioAPIBinding) GetSplitChanges() error {
-	return fmt.Errorf("not implemented")
+		if since == till {
+			break
+		}
+		allChanges = append(allChanges, results)
+		since = till
+		requestCount++
+	}
+
+	return allChanges, since, nil
 }

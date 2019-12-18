@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,29 @@ const (
 	mockSplitioAPIKey = "someKey"
 	mockSplitioAPIURI = "https://mock.sdk.split.io/api"
 )
+
+type mockHandler struct {
+	sync.Mutex
+	count int
+}
+
+func (h *mockHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.Lock()
+	if h.count == 0 {
+		fmt.Fprintln(w, `{"splits": [{"name":"mock-split-1", "killed": false}, 
+		                             {"name":"mock-split-2"}],
+		                  "since": -1, "till":10}`)
+	} else if h.count == 1 {
+		fmt.Fprintln(w, `{"splits": [{"name":"mock-split-1", "killed": true},
+			                         {"name":"mock-split-2", "status":"ARCHIVED"}, 
+		                             {"name":"mock-split-3"}, {"name":"mock-split-4"}],
+		                  "since": 10, "till":20}`)
+	} else if h.count == 2 {
+		fmt.Fprintln(w, `{"splits": [], "since":20, "till":20}`)
+	}
+	h.count++
+	h.Unlock()
+}
 
 func TestNewSplitioAPIBindingValid(t *testing.T) {
 	// Act
@@ -119,11 +143,119 @@ func TestGetSegmentChangesReturnsError(t *testing.T) {
 	assert.EqualError(t, err, "not implemented")
 }
 
-func TestGetSplitChangesReturnsError(t *testing.T) {
-	// Act
-	result := NewSplitioAPIBinding(mockSplitioAPIKey, mockSplitioAPIURI)
-	err := result.GetSplitChanges()
+func TestGetAllChangesValid(t *testing.T) {
+	// Arrange
+	handler := &mockHandler{}
+	testServer := httptest.NewServer(handler)
+	defer testServer.Close()
+	binding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
 
-	// Validate that GetSplitChanges function returns error
-	assert.EqualError(t, err, "not implemented")
+	// Act
+	changes, since, err := binding.getAllChanges("fake-path", "fake-segment")
+	expectedSplits := []interface{}{
+		map[string]interface{}{"name": "mock-split-1", "killed": false},
+		map[string]interface{}{"name": "mock-split-2"},
+	}
+
+	// Valide that getAllChanges returns valid value
+	assert.Nil(t, err)
+	assert.Equal(t, since, 20)
+	assert.Equal(t, changes[0]["splits"], expectedSplits)
+	assert.Equal(t, len(changes), 2)
+}
+
+func TestGetAllChangesReturnsHTTPError(t *testing.T) {
+	// Arrange
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+	}))
+	defer testServer.Close()
+	binding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
+
+	// Act
+	changes, since, err := binding.getAllChanges("fake-path", "fake-segment")
+
+	// Valide that getAllChanges return getHTTP error
+	assert.EqualError(t, err, "Non-OK HTTP status: 404 Not Found")
+	assert.Equal(t, changes, []map[string]interface{}{})
+	assert.Equal(t, since, 0)
+}
+
+func TestGetAllChangesReturnsIntConvertError(t *testing.T) {
+	// Arrange
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, `{"till":3.15}`)
+	}))
+	defer testServer.Close()
+	binding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
+
+	// Act
+	changes, since, err := binding.getAllChanges("fake-path", "fake-segment")
+
+	// Valide that getAllChanges return parsing error
+	assert.EqualError(t, err, "strconv.Atoi: parsing \"3.15\": invalid syntax")
+	assert.Equal(t, changes, []map[string]interface{}{})
+	assert.Equal(t, since, 0)
+}
+
+func TestGetSplitsValid(t *testing.T) {
+	// Arrange
+	handler := &mockHandler{}
+	testServer := httptest.NewServer(handler)
+	defer testServer.Close()
+	result := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
+
+	// Act
+	splits, since, err := result.GetSplits()
+	var splitOneKilled bool
+	var splitTwoExist bool
+	for _, split := range splits {
+		if split.Name == "mock-split-1" {
+			splitOneKilled = split.Killed
+		}
+		if split.Name == "mock-split-2" {
+			splitTwoExist = true
+		}
+	}
+
+	// Validate that GetSplits returns correct values
+	assert.Equal(t, since, 20)
+	assert.Equal(t, splitOneKilled, true)
+	assert.Equal(t, splitTwoExist, false)
+	assert.Equal(t, len(splits), 3)
+	assert.Nil(t, err)
+}
+
+func TestGetSplitsReturnsGetAllChangesError(t *testing.T) {
+	// Arrange
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(401)
+	}))
+	defer testServer.Close()
+	result := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
+
+	// Act
+	splits, since, err := result.GetSplits()
+
+	// Validate that GetSplits returns error from getAllChanges
+	assert.Equal(t, since, 0)
+	assert.Nil(t, splits)
+	assert.EqualError(t, err, "Non-OK HTTP status: 401 Unauthorized")
+}
+
+func TestGetSplitsReturnsDecodeError(t *testing.T) {
+	// Arrange
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, `{"since":"wrong-type", "till":10}`)
+	}))
+	defer testServer.Close()
+	result := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
+
+	// Act
+	splits, since, err := result.GetSplits()
+
+	// Validate that GetSplits returns decode error
+	assert.Equal(t, since, 0)
+	assert.Nil(t, splits)
+	assert.EqualError(t, err, "error when decode data to split: 1 error(s) decoding:\n\n* 'Since' expected type 'int', got unconvertible type 'string'")
 }
