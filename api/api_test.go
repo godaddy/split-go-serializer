@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,12 +15,10 @@ const (
 )
 
 type mockHandler struct {
-	sync.Mutex
 	count int
 }
 
 func (h *mockHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.Lock()
 	if h.count == 0 {
 		fmt.Fprintln(w, `{"splits": [{"name":"mock-split-1", "killed": false}, 
 		                             {"name":"mock-split-2"}],
@@ -35,7 +32,6 @@ func (h *mockHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, `{"splits": [], "since":20, "till":20}`)
 	}
 	h.count++
-	h.Unlock()
 }
 
 func TestNewSplitioAPIBindingValid(t *testing.T) {
