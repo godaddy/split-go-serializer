@@ -65,39 +65,8 @@ func TestStartValid(t *testing.T) {
 	result.Start()
 	time.Sleep(2 * time.Second)
 	assert.True(t, result.Cache > 1)
+	assert.Nil(t, result.Error)
 	result.quit <- true
-}
-
-func TestJobsUpdatesCache(t *testing.T) {
-	// Arrange
-	pollingRateSeconds := 1
-
-	//Act
-	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
-
-	// Validate that after calling jobs the cache is updated
-	assert.Equal(t, result.Cache, 0)
-	time.AfterFunc(3*time.Second, func() {
-		result.quit <- true
-	})
-	result.jobs()
-	assert.True(t, result.Cache > 0)
-}
-
-func TestJobsStopsWhenError(t *testing.T) {
-	// Arrange
-	pollingRateSeconds := 1
-
-	//Act
-	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
-
-	// Validate that Jobs stop if error is received
-	assert.Equal(t, result.Cache, 0)
-	time.AfterFunc(3*time.Second, func() {
-		result.errorChannel <- errors.New("mock error")
-	})
-	result.jobs()
-	assert.True(t, result.Cache > 0)
 }
 
 func TestStopValid(t *testing.T) {
@@ -109,8 +78,88 @@ func TestStopValid(t *testing.T) {
 
 	// Validate that when Stop is called, jobs will stop
 	assert.Equal(t, result.Cache, 0)
-	time.AfterFunc(3*time.Second, func() { result.Stop() })
-	// jobs is an infinite loop, and expect to stop after Stop is called
-	result.jobs()
+	go result.jobs()
+	time.Sleep(2 * time.Second)
+	result.Stop()
+	cacheAfterStop := result.Cache
+	assert.True(t, cacheAfterStop > 0)
+	time.Sleep(2 * time.Second)
+	assert.Equal(t, cacheAfterStop, result.Cache)
+}
+
+func TestJobsUpdatesCache(t *testing.T) {
+	// Arrange
+	pollingRateSeconds := 1
+
+	//Act
+	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
+
+	// Validate that after calling jobs the cache is updated
+	assert.Equal(t, result.Cache, 0)
+	go result.jobs()
+	time.Sleep(2 * time.Second)
 	assert.True(t, result.Cache > 0)
+	result.quit <- true
+}
+
+func TestJobsStopsWhenError(t *testing.T) {
+	// Arrange
+	pollingRateSeconds := 1
+
+	//Act
+	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
+
+	// Validate that Jobs stop if error is received
+	assert.Equal(t, result.Cache, 0)
+	go result.jobs()
+	time.Sleep(2 * time.Second)
+	assert.True(t, result.Cache > 0)
+	result.errorChannel <- errors.New("mock error")
+	cacheAfterStop := result.Cache
+	time.Sleep(2 * time.Second)
+	assert.Equal(t, cacheAfterStop, result.Cache)
+}
+
+func TestJobsStopsWhenQuit(t *testing.T) {
+	// Arrange
+	pollingRateSeconds := 1
+
+	//Act
+	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
+
+	// Validate that Jobs stop if quit is set to true
+	assert.Equal(t, result.Cache, 0)
+	go result.jobs()
+	time.Sleep(2 * time.Second)
+	assert.True(t, result.Cache > 0)
+	result.quit <- true
+	cacheAfterStop := result.Cache
+	time.Sleep(2 * time.Second)
+	assert.Equal(t, cacheAfterStop, result.Cache)
+}
+
+func TestJobsCanRunTwiceAfterStop(t *testing.T) {
+	// Arrange
+	pollingRateSeconds := 1
+
+	//Act
+	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
+
+	// Validate that jobs can be run more than once
+
+	// First loop
+	assert.Equal(t, result.Cache, 0)
+	go result.jobs()
+	time.Sleep(5 * time.Second)
+	assert.True(t, result.Cache > 0) // assert loop calls function so cache is updated
+	result.Stop()
+	firstCache := result.Cache
+	time.Sleep(5 * time.Second)
+	assert.Equal(t, result.Cache, firstCache) // verfify Cache didn't update after stop
+
+	// Second loop
+	go result.jobs()
+	time.Sleep(2 * time.Second)
+	assert.True(t, result.Cache > firstCache) //verfify cache is updated due to second loop
+	result.Stop()
 }

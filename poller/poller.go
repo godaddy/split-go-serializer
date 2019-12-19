@@ -9,12 +9,12 @@ import (
 // Poller contains cache data and SplitioAPIBinding
 type Poller struct {
 	Cache              int
+	Error              error
 	splitioAPIBinding  api.SplitioAPIBinding
 	pollingRateSeconds int
 	serializeSegments  bool
 	quit               chan bool
 	errorChannel       chan error
-	Error              error
 }
 
 // NewPoller returns a new Poller
@@ -23,7 +23,7 @@ func NewPoller(splitioAPIKey string, pollingRateSeconds int, serializeSegments b
 		pollingRateSeconds = 300
 	}
 	splitioAPIBinding := api.NewSplitioAPIBinding(splitioAPIKey, "")
-	return &Poller{0, *splitioAPIBinding, pollingRateSeconds, serializeSegments, make(chan bool), make(chan error), nil}
+	return &Poller{0, nil, *splitioAPIBinding, pollingRateSeconds, serializeSegments, make(chan bool), make(chan error)}
 }
 
 // pollForChanges will get the latest data of splits and segment
@@ -37,6 +37,7 @@ func (poller *Poller) pollForChanges() {
 
 // Start creates a goroutine and keep tracking until it stops
 func (poller *Poller) Start() {
+	poller.Error = nil
 	poller.pollForChanges()
 	go poller.jobs()
 }
@@ -44,8 +45,6 @@ func (poller *Poller) Start() {
 // Stop sets quit to true in order to stop the loop
 func (poller *Poller) Stop() {
 	poller.quit <- true
-	poller.quit = make(chan bool)
-	poller.errorChannel = make(chan error)
 }
 
 // jobs controls whether keep or stop running
