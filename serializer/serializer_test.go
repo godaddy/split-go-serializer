@@ -22,8 +22,6 @@ func TestNewSerializerValid(t *testing.T) {
 
 	// Validate that returned Serializer has the correct type and values
 	assert.IsType(t, result.poller, poller.Poller{})
-	assert.Equal(t, result.poller.PollingRateSeconds, pollingRateSeconds)
-	assert.Equal(t, result.poller.SerializeSegments, serializeSegments)
 }
 
 func TestGetSerializedDataReturnsError(t *testing.T) {

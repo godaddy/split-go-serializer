@@ -8,11 +8,13 @@ import (
 
 // Poller contains cache data and SplitioAPIBinding
 type Poller struct {
-	Cache              string
-	SplitioAPIBinding  api.SplitioAPIBinding
-	PollingRateSeconds int
-	SerializeSegments  bool
+	Cache              int
+	splitioAPIBinding  api.SplitioAPIBinding
+	pollingRateSeconds int
+	serializeSegments  bool
 	quit               chan bool
+	errorChannel       chan error
+	Error              error
 }
 
 // NewPoller returns a new Poller
@@ -21,14 +23,16 @@ func NewPoller(splitioAPIKey string, pollingRateSeconds int, serializeSegments b
 		pollingRateSeconds = 300
 	}
 	splitioAPIBinding := api.NewSplitioAPIBinding(splitioAPIKey, "")
-	return &Poller{"", *splitioAPIBinding, pollingRateSeconds, serializeSegments, make(chan bool)}
+	return &Poller{0, *splitioAPIBinding, pollingRateSeconds, serializeSegments, make(chan bool), make(chan error), nil}
 }
 
 // pollForChanges will get the latest data of splits and segment
-func (poller *Poller) pollForChanges() error {
-	//TODO: call getSplits and getSegments to formulate the cache
-	poller.Cache = "data from splitChanges and segmentChanges"
-	return nil
+func (poller *Poller) pollForChanges() {
+	// TODO: call getSplits and getSegments to formulate the cach
+	// if any of the returned splits/segments have error:
+	// 1. pass the error to poller.Error and log the error
+	// 2. send the error to poller.errorChannel so it will stop the loop
+	poller.Cache++
 }
 
 // Start creates a goroutine and keep tracking until it stops
@@ -40,16 +44,20 @@ func (poller *Poller) Start() {
 // Stop sets quit to true in order to stop the loop
 func (poller *Poller) Stop() {
 	poller.quit <- true
+	poller.quit = make(chan bool)
+	poller.errorChannel = make(chan error)
 }
 
 // jobs controls whether keep or stop running
 func (poller *Poller) jobs() {
-	ticker := time.NewTicker(time.Duration(poller.PollingRateSeconds) * time.Second)
+	ticker := time.NewTicker(time.Duration(poller.pollingRateSeconds) * time.Second)
 	for {
 		select {
 		case <-poller.quit:
 			ticker.Stop()
-			close(poller.quit)
+			return
+		case <-poller.errorChannel:
+			ticker.Stop()
 			return
 		case <-ticker.C:
 			poller.pollForChanges()

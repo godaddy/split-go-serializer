@@ -1,6 +1,7 @@
 package poller
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -21,10 +22,10 @@ func TestNewPollerValid(t *testing.T) {
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
 
 	// Validate that returned Poller has the correct type and values
-	assert.Equal(t, result.PollingRateSeconds, pollingRateSeconds)
-	assert.Equal(t, result.SerializeSegments, serializeSegments)
-	assert.Equal(t, result.Cache, "")
-	assert.IsType(t, result.SplitioAPIBinding, api.SplitioAPIBinding{})
+	assert.Equal(t, result.pollingRateSeconds, pollingRateSeconds)
+	assert.Equal(t, result.serializeSegments, serializeSegments)
+	assert.IsType(t, result.splitioAPIBinding, api.SplitioAPIBinding{})
+	assert.Equal(t, result.Cache, 0)
 }
 
 func TestNewSerializerDefaultPollingRateSeconds(t *testing.T) {
@@ -36,7 +37,7 @@ func TestNewSerializerDefaultPollingRateSeconds(t *testing.T) {
 	expectedPollingRateSeconds := 300
 
 	// Validate that returned Poller has the correct type and values
-	assert.Equal(t, result.PollingRateSeconds, expectedPollingRateSeconds)
+	assert.Equal(t, result.pollingRateSeconds, expectedPollingRateSeconds)
 }
 
 func TestPollforChangesValid(t *testing.T) {
@@ -45,11 +46,11 @@ func TestPollforChangesValid(t *testing.T) {
 
 	//Act
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
-	err := result.pollForChanges()
+	result.pollForChanges()
 
 	// Validate that after calling PollforChanges it returns the right value
-	assert.Nil(t, err)
-	assert.Equal(t, "data from splitChanges and segmentChanges", result.Cache)
+	assert.Equal(t, 1, result.Cache)
+	assert.Nil(t, result.Error)
 }
 
 func TestStartValid(t *testing.T) {
@@ -60,24 +61,43 @@ func TestStartValid(t *testing.T) {
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
 
 	// Validate that after calling Start the cache is updated
-	assert.Equal(t, result.Cache, "")
+	assert.Equal(t, result.Cache, 0)
 	result.Start()
-	assert.Equal(t, result.Cache, "data from splitChanges and segmentChanges")
+	time.Sleep(2 * time.Second)
+	assert.True(t, result.Cache > 1)
+	result.quit <- true
 }
 
-func TestJobsValid(t *testing.T) {
+func TestJobsUpdatesCache(t *testing.T) {
 	// Arrange
 	pollingRateSeconds := 1
 
 	//Act
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
 
-	// Validate that jobs function triggers pollForChanges and updates the cache
-	assert.Equal(t, result.Cache, "")
-	go result.jobs()
-	time.Sleep(2 * time.Second)
-	result.quit <- true
-	assert.Equal(t, result.Cache, "data from splitChanges and segmentChanges")
+	// Validate that after calling jobs the cache is updated
+	assert.Equal(t, result.Cache, 0)
+	time.AfterFunc(3*time.Second, func() {
+		result.quit <- true
+	})
+	result.jobs()
+	assert.True(t, result.Cache > 0)
+}
+
+func TestJobsStopsWhenError(t *testing.T) {
+	// Arrange
+	pollingRateSeconds := 1
+
+	//Act
+	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
+
+	// Validate that Jobs stop if error is received
+	assert.Equal(t, result.Cache, 0)
+	time.AfterFunc(3*time.Second, func() {
+		result.errorChannel <- errors.New("mock error")
+	})
+	result.jobs()
+	assert.True(t, result.Cache > 0)
 }
 
 func TestStopValid(t *testing.T) {
@@ -88,9 +108,9 @@ func TestStopValid(t *testing.T) {
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
 
 	// Validate that when Stop is called, jobs will stop
-	assert.Equal(t, result.Cache, "")
+	assert.Equal(t, result.Cache, 0)
 	time.AfterFunc(3*time.Second, func() { result.Stop() })
 	// jobs is an infinite loop, and expect to stop after Stop is called
 	result.jobs()
-	assert.Equal(t, result.Cache, "data from splitChanges and segmentChanges")
+	assert.True(t, result.Cache > 0)
 }
