@@ -14,7 +14,6 @@ type Poller struct {
 	pollingRateSeconds int
 	serializeSegments  bool
 	quit               chan bool
-	errorChannel       chan error
 }
 
 // NewPoller returns a new Poller
@@ -23,15 +22,15 @@ func NewPoller(splitioAPIKey string, pollingRateSeconds int, serializeSegments b
 		pollingRateSeconds = 300
 	}
 	splitioAPIBinding := api.NewSplitioAPIBinding(splitioAPIKey, "")
-	return &Poller{0, nil, *splitioAPIBinding, pollingRateSeconds, serializeSegments, make(chan bool), make(chan error)}
+	return &Poller{0, nil, *splitioAPIBinding, pollingRateSeconds, serializeSegments, make(chan bool)}
 }
 
 // pollForChanges will get the latest data of splits and segment
 func (poller *Poller) pollForChanges() {
-	// TODO: call getSplits and getSegments to formulate the cach
+	// TODO: call getSplits and getSegments to formulate the cache
 	// if any of the returned splits/segments have error:
 	// 1. pass the error to poller.Error and log the error
-	// 2. send the error to poller.errorChannel so it will stop the loop
+	// 2. if cache updates successfully, set poller.Error to nil
 	poller.Cache++
 }
 
@@ -53,9 +52,6 @@ func (poller *Poller) jobs() {
 	for {
 		select {
 		case <-poller.quit:
-			ticker.Stop()
-			return
-		case <-poller.errorChannel:
 			ticker.Stop()
 			return
 		case <-ticker.C:

@@ -1,7 +1,6 @@
 package poller
 
 import (
-	"errors"
 	"testing"
 	"time"
 
@@ -100,24 +99,6 @@ func TestJobsUpdatesCache(t *testing.T) {
 	time.Sleep(2 * time.Second)
 	assert.True(t, result.Cache > 0)
 	result.quit <- true
-}
-
-func TestJobsStopsWhenError(t *testing.T) {
-	// Arrange
-	pollingRateSeconds := 1
-
-	//Act
-	result := NewPoller(testKey, pollingRateSeconds, serializeSegments)
-
-	// Validate that Jobs stop if error is received
-	assert.Equal(t, result.Cache, 0)
-	go result.jobs()
-	time.Sleep(2 * time.Second)
-	assert.True(t, result.Cache > 0)
-	result.errorChannel <- errors.New("mock error")
-	cacheAfterStop := result.Cache
-	time.Sleep(2 * time.Second)
-	assert.Equal(t, cacheAfterStop, result.Cache)
 }
 
 func TestJobsStopsWhenQuit(t *testing.T) {
