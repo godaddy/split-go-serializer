@@ -12,6 +12,9 @@ import (
 const (
 	mockSplitioAPIKey = "someKey"
 	mockSplitioAPIURI = "https://mock.sdk.split.io/api"
+	mockPath          = "mockPath"
+	mockSegment       = "mockSegment"
+	mockSince         = int64(-1)
 )
 
 type mockHandler struct {
@@ -58,16 +61,12 @@ func TestHttpGetReturnsSuccessfulResponse(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	path := "mockPath"
-	segment := "mockSegment"
-	since := -1
-
 	// Act
 	expectedData := map[string]interface{}{
 		"data": "fake splitio json string",
 	}
 	binding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
-	result, err := binding.httpGet(path, segment, since)
+	result, err := binding.httpGet(mockPath, mockSegment, mockSince)
 
 	// Validate that httpGet function returns correct data and empty error
 	assert.Equal(t, result, expectedData)
@@ -81,13 +80,9 @@ func TestHttpGetReturnsErrorOnNonOKResponse(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	path := "mockPath"
-	segment := "mockSegment"
-	since := -1
-
 	// Act
 	apiBinding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
-	result, err := apiBinding.httpGet(path, segment, since)
+	result, err := apiBinding.httpGet(mockPath, mockSegment, mockSince)
 
 	// Validate that httpGet function returns unsuccessful error
 	assert.EqualError(t, err, "Non-OK HTTP status: 404 Not Found")
@@ -97,13 +92,10 @@ func TestHttpGetReturnsErrorOnNonOKResponse(t *testing.T) {
 func TestHttpGetReturnsNewRequestError(t *testing.T) {
 	// Arrange
 	badURI := ":"
-	path := "mockPath"
-	segment := "mockSegment"
-	since := -1
 
 	// Act
 	apiBinding := NewSplitioAPIBinding(mockSplitioAPIKey, badURI)
-	result, err := apiBinding.httpGet(path, segment, since)
+	result, err := apiBinding.httpGet(mockPath, mockSegment, mockSince)
 
 	// Validate that httpGet function returns new request error
 	assert.EqualError(t, err, "Http get request error: parse :/mockPath/mockSegment: missing protocol scheme")
@@ -117,13 +109,9 @@ func TestHttpGetReturnsDecodeError(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	path := "mockPath"
-	segment := "mockSegment"
-	since := -1
-
 	// Act
 	apiBinding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
-	result, err := apiBinding.httpGet(path, segment, since)
+	result, err := apiBinding.httpGet(mockPath, mockSegment, mockSince)
 
 	// Validate that httpGet function returns new request error
 	assert.EqualError(t, err, "Decode error: invalid character 'i' looking for beginning of value")
@@ -155,7 +143,7 @@ func TestGetAllChangesValid(t *testing.T) {
 
 	// Valide that getAllChanges returns valid value
 	assert.Nil(t, err)
-	assert.Equal(t, since, 20)
+	assert.Equal(t, since, int64(20))
 	assert.Equal(t, changes[0]["splits"], expectedSplits)
 	assert.Equal(t, len(changes), 2)
 }
@@ -174,7 +162,7 @@ func TestGetAllChangesReturnsHTTPError(t *testing.T) {
 	// Valide that getAllChanges return getHTTP error
 	assert.EqualError(t, err, "Non-OK HTTP status: 404 Not Found")
 	assert.Equal(t, changes, []map[string]interface{}{})
-	assert.Equal(t, since, 0)
+	assert.Equal(t, since, int64(0))
 }
 
 func TestGetAllChangesReturnsIntConvertError(t *testing.T) {
@@ -189,9 +177,9 @@ func TestGetAllChangesReturnsIntConvertError(t *testing.T) {
 	changes, since, err := binding.getAllChanges("fake-path", "fake-segment")
 
 	// Valide that getAllChanges return parsing error
-	assert.EqualError(t, err, "strconv.Atoi: parsing \"3.15\": invalid syntax")
+	assert.EqualError(t, err, "strconv.ParseInt: parsing \"3.15\": invalid syntax")
 	assert.Equal(t, changes, []map[string]interface{}{})
-	assert.Equal(t, since, 0)
+	assert.Equal(t, since, int64(0))
 }
 
 func TestGetSplitsValid(t *testing.T) {
@@ -215,7 +203,7 @@ func TestGetSplitsValid(t *testing.T) {
 	}
 
 	// Validate that GetSplits returns correct values
-	assert.Equal(t, since, 20)
+	assert.Equal(t, since, int64(20))
 	assert.Equal(t, splitOneKilled, true)
 	assert.Equal(t, splitTwoExist, false)
 	assert.Equal(t, len(splits), 3)
@@ -234,7 +222,7 @@ func TestGetSplitsReturnsGetAllChangesError(t *testing.T) {
 	splits, since, err := result.GetSplits()
 
 	// Validate that GetSplits returns error from getAllChanges
-	assert.Equal(t, since, 0)
+	assert.Equal(t, since, int64(0))
 	assert.Nil(t, splits)
 	assert.EqualError(t, err, "Non-OK HTTP status: 401 Unauthorized")
 }
@@ -251,7 +239,7 @@ func TestGetSplitsReturnsDecodeError(t *testing.T) {
 	splits, since, err := result.GetSplits()
 
 	// Validate that GetSplits returns decode error
-	assert.Equal(t, since, 0)
+	assert.Equal(t, since, int64(0))
 	assert.Nil(t, splits)
-	assert.EqualError(t, err, "error when decode data to split: 1 error(s) decoding:\n\n* 'Since' expected type 'int', got unconvertible type 'string'")
+	assert.EqualError(t, err, "error when decode data to split: 1 error(s) decoding:\n\n* 'Since' expected type 'int64', got unconvertible type 'string'")
 }

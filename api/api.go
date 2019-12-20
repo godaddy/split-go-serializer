@@ -9,11 +9,12 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/mitchellh/mapstructure"
+	"github.com/splitio/go-client/splitio/service/dtos"
 )
 
 const (
 	splitioAPIUri        = "https://sdk.split.io/api"
-	firstRequestSince    = -1
+	firstRequestSince    = int64(-1)
 	defaultMaxRequestNum = 100
 )
 
@@ -21,57 +22,6 @@ const (
 type SplitioAPIBinding struct {
 	splitioAPIKey string
 	splitioAPIUri string
-}
-
-// splitResponse contains the response for splitChange end point
-type splitResponse struct {
-	Splits []Split
-	Since  int
-	Till   int
-}
-
-// Split struct contains info for a split
-type Split struct {
-	Name                  string
-	Seed                  int
-	Status                string
-	Killed                bool
-	DefaultTreatment      string
-	Conditions            []Condition
-	Configurations        map[string]interface{}
-	ChangeNumber          int
-	TrafficAllocation     int
-	TrafficAllocationSeed int
-	TrafficTypeName       string
-	Alog                  int
-}
-
-// Condition contains conditions for the split
-type Condition struct {
-	ConditionType string
-	MatcherGroup  MatcherGroup
-	Partitions    []map[string]interface{}
-	Label         string
-}
-
-// MatcherGroup contains logical combiner and a list of matchers
-type MatcherGroup struct {
-	Combiner string
-	Matchers []Matcher
-}
-
-// Matcher contains matcher info
-type Matcher struct {
-	KeySelector                   map[string]interface{}
-	MatcherType                   string
-	Negate                        bool
-	UserDefinedSegmentMatcherData map[string]string
-	WhitelistMatcherData          interface{}
-	UnaryNumericMatcherData       interface{}
-	BetweenMatcherData            interface{}
-	BooleanMatcherData            interface{}
-	DependencyMatcherData         bool
-	StringMatcherData             string
 }
 
 // NewSplitioAPIBinding returns a new SplitioAPIBinding
@@ -83,17 +33,17 @@ func NewSplitioAPIBinding(apiKey string, apiURL string) *SplitioAPIBinding {
 }
 
 // GetSplits gets the split data
-func (binding *SplitioAPIBinding) GetSplits() ([]Split, int, error) {
+func (binding *SplitioAPIBinding) GetSplits() ([]dtos.SplitDTO, int64, error) {
 	path := "splitChanges"
-	splitsMap := map[string]Split{}
-	splits := []Split{}
+	splitsMap := map[string]dtos.SplitDTO{}
+	splits := []dtos.SplitDTO{}
 	allChanges, since, err := binding.getAllChanges(path, "")
 	if err != nil {
 		return nil, 0, err
 	}
 
 	for _, changes := range allChanges {
-		var result splitResponse
+		var result dtos.SplitChangesDTO
 		err = mapstructure.Decode(changes, &result)
 		if err != nil {
 			err = fmt.Errorf("error when decode data to split: %s", err)
@@ -124,7 +74,7 @@ func (binding *SplitioAPIBinding) GetSegmentChanges() error {
 // path is the path of the HTTP request, either "splitChanges" or "segmentChanges"
 // segment is the segment name when path is "segmentChange", otherwise should be empty
 // since is an integer used as a query string, will be -1 on the first request
-func (binding *SplitioAPIBinding) httpGet(path string, segment string, since int) (map[string]interface{}, error) {
+func (binding *SplitioAPIBinding) httpGet(path string, segment string, since int64) (map[string]interface{}, error) {
 	client := resty.New()
 	resp, err := client.R().
 		SetPathParams(map[string]string{
@@ -132,7 +82,7 @@ func (binding *SplitioAPIBinding) httpGet(path string, segment string, since int
 			"segment": segment,
 		}).
 		SetQueryParams(map[string]string{
-			"since": strconv.Itoa(since),
+			"since": strconv.FormatInt(since, 10),
 		}).
 		SetHeaders(map[string]string{
 			"Accept":        "application/json",
@@ -165,7 +115,7 @@ func (binding *SplitioAPIBinding) httpGet(path string, segment string, since int
 // getAllChanges polls the Split.io API until since and till are the same
 // path is the path of the HTTP request e.g "splitChanges", "segmentChanges"
 // segment is the segment name, will be empty when the end point is splitChanges
-func (binding *SplitioAPIBinding) getAllChanges(path string, segment string) ([]map[string]interface{}, int, error) {
+func (binding *SplitioAPIBinding) getAllChanges(path string, segment string) ([]map[string]interface{}, int64, error) {
 	since := firstRequestSince
 	requestCount := 0
 	allChanges := []map[string]interface{}{}
@@ -174,7 +124,7 @@ func (binding *SplitioAPIBinding) getAllChanges(path string, segment string) ([]
 		if err != nil {
 			return allChanges, 0, err
 		}
-		till, err := strconv.Atoi(results["till"].(json.Number).String())
+		till, err := results["till"].(json.Number).Int64()
 		if err != nil {
 			return allChanges, 0, err
 		}
