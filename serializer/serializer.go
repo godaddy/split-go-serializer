@@ -3,25 +3,17 @@ package serializer
 import (
 	"fmt"
 
-	"github.com/godaddy/split-go-serializer/api"
+	"github.com/godaddy/split-go-serializer/poller"
 )
 
-// Serializer contains splitioAPIBinding
+// Serializer contains poller
 type Serializer struct {
-	splitioAPIKey      string
-	splitioAPIBinding  api.SplitioAPIBinding
-	pollingRateSeconds int
-	serializeSegments  bool
+	poller poller.Poller
 }
 
 // NewSerializer returns a new Serializer
-func NewSerializer(splitioAPIKey string, pollingRateSeconds int, serializeSegments bool) *Serializer {
-	if pollingRateSeconds == 0 {
-		pollingRateSeconds = 300
-	}
-	splitioAPIBinding := api.NewSplitioAPIBinding(splitioAPIKey, "")
-
-	return &Serializer{splitioAPIKey, *splitioAPIBinding, pollingRateSeconds, serializeSegments}
+func NewSerializer(poller *poller.Poller) *Serializer {
+	return &Serializer{*poller}
 }
 
 // GetSerializedData will serialize split and segment data into strings

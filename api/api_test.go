@@ -1,11 +1,13 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/splitio/go-client/splitio/service/dtos"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -241,4 +243,45 @@ func TestGetSplitsReturnsDecodeError(t *testing.T) {
 	assert.Equal(t, since, int64(0))
 	assert.Nil(t, splits)
 	assert.EqualError(t, err, "error when decode data to split: 1 error(s) decoding:\n\n* 'Since' expected type 'int64', got unconvertible type 'string'")
+}
+
+func TestGetSegmentNamesInUseValid(t *testing.T) {
+	// Arrange
+	mockConditions := []byte(`
+	[{
+          "conditionType": "foo",
+          "matcherGroup": {
+            "matchers": [
+              {
+                "matcherType": "WHITELIST"
+              }
+            ]
+          }
+        },
+        {
+          "conditionType": "bar",
+          "matcherGroup": {
+            "matchers": [
+              {
+                "matcherType": "IN_SEGMENT",
+                "userDefinedSegmentMatcherData": {
+                  "segmentName": "test-segment"
+                }
+              }
+            ]
+          }
+        }
+      ]`)
+	conditions := []dtos.ConditionDTO{}
+	json.Unmarshal(mockConditions, &conditions)
+
+	// Act
+	segmentNames := getSegmentNamesInUse(conditions)
+	expectedNames := map[string]bool{
+		"test-segment": true,
+	}
+
+	// Validate that returned segmentNames has the correct names
+	assert.Equal(t, segmentNames, expectedNames)
+	assert.Equal(t, segmentNames["test-segment"], true)
 }

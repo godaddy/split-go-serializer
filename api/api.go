@@ -133,3 +133,17 @@ func (binding *SplitioAPIBinding) getAllChanges(path string) ([]map[string]inter
 
 	return allChanges, since, nil
 }
+
+func getSegmentNamesInUse(conditions []dtos.ConditionDTO) map[string]bool {
+	segmentNames := map[string]bool{}
+	for _, condition := range conditions {
+		for _, matcher := range condition.MatcherGroup.Matchers {
+			if matcher.MatcherType == "IN_SEGMENT" {
+				segmentNames[matcher.UserDefinedSegment.SegmentName] = true
+			}
+		}
+	}
+
+	return segmentNames
+
+}
