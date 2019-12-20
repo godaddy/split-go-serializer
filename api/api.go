@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/splitio/go-client/splitio/service/dtos"
 )
 
 const splitioAPIUri = "https://sdk.split.io/api"
@@ -76,4 +77,18 @@ func (binding *SplitioAPIBinding) GetSegmentChanges() error {
 // GetSplitChanges will get split data
 func (binding *SplitioAPIBinding) GetSplitChanges() error {
 	return fmt.Errorf("not implemented")
+}
+
+func getSegmentNamesInUse(conditions []dtos.ConditionDTO) map[string]bool {
+	segmentNames := map[string]bool{}
+	for _, condition := range conditions {
+		for _, matcher := range condition.MatcherGroup.Matchers {
+			if matcher.MatcherType == "IN_SEGMENT" {
+				segmentNames[matcher.UserDefinedSegment.SegmentName] = true
+			}
+		}
+	}
+
+	return segmentNames
+
 }
