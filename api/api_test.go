@@ -161,7 +161,7 @@ func TestGetAllChangesReturnsHTTPError(t *testing.T) {
 
 	// Valide that getAllChanges return getHTTP error
 	assert.EqualError(t, err, "Non-OK HTTP status: 404 Not Found")
-	assert.Equal(t, changes, []map[string]interface{}{})
+	assert.Nil(t, changes)
 	assert.Equal(t, since, int64(0))
 }
 
@@ -178,7 +178,7 @@ func TestGetAllChangesReturnsIntConvertError(t *testing.T) {
 
 	// Valide that getAllChanges return parsing error
 	assert.EqualError(t, err, "strconv.ParseInt: parsing \"3.15\": invalid syntax")
-	assert.Equal(t, changes, []map[string]interface{}{})
+	assert.Nil(t, changes)
 	assert.Equal(t, since, int64(0))
 }
 

@@ -122,11 +122,11 @@ func (binding *SplitioAPIBinding) getAllChanges(path string, segment string) ([]
 	for requestCount < defaultMaxRequestNum {
 		results, err := binding.httpGet(path, segment, since)
 		if err != nil {
-			return allChanges, 0, err
+			return nil, 0, err
 		}
 		till, err := results["till"].(json.Number).Int64()
 		if err != nil {
-			return allChanges, 0, err
+			return nil, 0, err
 		}
 
 		if since == till {
