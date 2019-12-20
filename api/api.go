@@ -71,8 +71,7 @@ func (binding *SplitioAPIBinding) GetSegmentChanges() error {
 }
 
 // httpGet makes a GET request to the Split.io SDK API.
-// path is the path of the HTTP request, either "splitChanges" or "segmentChanges"
-// segment is the segment name when path is "segmentChange", otherwise should be empty
+// path is the path of the HTTP request, either "splitChanges" or "segmentChanges/segmentName"
 // since is an integer used as a query string, will be -1 on the first request
 func (binding *SplitioAPIBinding) httpGet(path string, since int64) (map[string]interface{}, error) {
 	client := resty.New()
@@ -109,7 +108,7 @@ func (binding *SplitioAPIBinding) httpGet(path string, since int64) (map[string]
 }
 
 // getAllChanges polls the Split.io API until since and till are the same
-// path is the path of the HTTP request e.g "splitChanges", "segmentChanges"
+// path is the path of the HTTP request e.g "splitChanges", "segmentChanges/segmentName"
 func (binding *SplitioAPIBinding) getAllChanges(path string) ([]map[string]interface{}, int64, error) {
 	since := firstRequestSince
 	requestCount := 0
