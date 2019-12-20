@@ -13,7 +13,6 @@ const (
 	mockSplitioAPIKey = "someKey"
 	mockSplitioAPIURI = "https://mock.sdk.split.io/api"
 	mockPath          = "mockPath"
-	mockSegment       = "mockSegment"
 	mockSince         = int64(-1)
 )
 
@@ -66,7 +65,7 @@ func TestHttpGetReturnsSuccessfulResponse(t *testing.T) {
 		"data": "fake splitio json string",
 	}
 	binding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
-	result, err := binding.httpGet(mockPath, mockSegment, mockSince)
+	result, err := binding.httpGet(mockPath, mockSince)
 
 	// Validate that httpGet function returns correct data and empty error
 	assert.Equal(t, result, expectedData)
@@ -82,7 +81,7 @@ func TestHttpGetReturnsErrorOnNonOKResponse(t *testing.T) {
 
 	// Act
 	apiBinding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
-	result, err := apiBinding.httpGet(mockPath, mockSegment, mockSince)
+	result, err := apiBinding.httpGet(mockPath, mockSince)
 
 	// Validate that httpGet function returns unsuccessful error
 	assert.EqualError(t, err, "Non-OK HTTP status: 404 Not Found")
@@ -95,10 +94,10 @@ func TestHttpGetReturnsNewRequestError(t *testing.T) {
 
 	// Act
 	apiBinding := NewSplitioAPIBinding(mockSplitioAPIKey, badURI)
-	result, err := apiBinding.httpGet(mockPath, mockSegment, mockSince)
+	result, err := apiBinding.httpGet(mockPath, mockSince)
 
 	// Validate that httpGet function returns new request error
-	assert.EqualError(t, err, "Http get request error: parse :/mockPath/mockSegment: missing protocol scheme")
+	assert.EqualError(t, err, "Http get request error: parse :/mockPath: missing protocol scheme")
 	assert.Equal(t, result, map[string]interface{}{})
 }
 
@@ -111,7 +110,7 @@ func TestHttpGetReturnsDecodeError(t *testing.T) {
 
 	// Act
 	apiBinding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
-	result, err := apiBinding.httpGet(mockPath, mockSegment, mockSince)
+	result, err := apiBinding.httpGet(mockPath, mockSince)
 
 	// Validate that httpGet function returns new request error
 	assert.EqualError(t, err, "Decode error: invalid character 'i' looking for beginning of value")
@@ -135,7 +134,7 @@ func TestGetAllChangesValid(t *testing.T) {
 	binding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
 
 	// Act
-	changes, since, err := binding.getAllChanges("fake-path", "fake-segment")
+	changes, since, err := binding.getAllChanges(mockPath)
 	expectedSplits := []interface{}{
 		map[string]interface{}{"name": "mock-split-1", "killed": false},
 		map[string]interface{}{"name": "mock-split-2"},
@@ -157,7 +156,7 @@ func TestGetAllChangesReturnsHTTPError(t *testing.T) {
 	binding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
 
 	// Act
-	changes, since, err := binding.getAllChanges("fake-path", "fake-segment")
+	changes, since, err := binding.getAllChanges(mockPath)
 
 	// Valide that getAllChanges return getHTTP error
 	assert.EqualError(t, err, "Non-OK HTTP status: 404 Not Found")
@@ -174,7 +173,7 @@ func TestGetAllChangesReturnsIntConvertError(t *testing.T) {
 	binding := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
 
 	// Act
-	changes, since, err := binding.getAllChanges("fake-path", "fake-segment")
+	changes, since, err := binding.getAllChanges(mockPath)
 
 	// Valide that getAllChanges return parsing error
 	assert.EqualError(t, err, "strconv.ParseInt: parsing \"3.15\": invalid syntax")

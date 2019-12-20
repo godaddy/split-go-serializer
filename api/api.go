@@ -37,7 +37,7 @@ func (binding *SplitioAPIBinding) GetSplits() ([]dtos.SplitDTO, int64, error) {
 	path := "splitChanges"
 	splitsMap := map[string]dtos.SplitDTO{}
 	splits := []dtos.SplitDTO{}
-	allChanges, since, err := binding.getAllChanges(path, "")
+	allChanges, since, err := binding.getAllChanges(path)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -74,13 +74,9 @@ func (binding *SplitioAPIBinding) GetSegmentChanges() error {
 // path is the path of the HTTP request, either "splitChanges" or "segmentChanges"
 // segment is the segment name when path is "segmentChange", otherwise should be empty
 // since is an integer used as a query string, will be -1 on the first request
-func (binding *SplitioAPIBinding) httpGet(path string, segment string, since int64) (map[string]interface{}, error) {
+func (binding *SplitioAPIBinding) httpGet(path string, since int64) (map[string]interface{}, error) {
 	client := resty.New()
 	resp, err := client.R().
-		SetPathParams(map[string]string{
-			"path":    path,
-			"segment": segment,
-		}).
 		SetQueryParams(map[string]string{
 			"since": strconv.FormatInt(since, 10),
 		}).
@@ -88,7 +84,7 @@ func (binding *SplitioAPIBinding) httpGet(path string, segment string, since int
 			"Accept":        "application/json",
 			"Authorization": fmt.Sprintf("Bearer %s", binding.splitioAPIKey),
 		}).
-		Get(fmt.Sprintf("%s/{path}/{segment}", binding.splitioAPIUri))
+		Get(fmt.Sprintf("%s/%s", binding.splitioAPIUri, path))
 
 	if err != nil {
 		err = fmt.Errorf("Http get request error: %s", err)
@@ -114,13 +110,12 @@ func (binding *SplitioAPIBinding) httpGet(path string, segment string, since int
 
 // getAllChanges polls the Split.io API until since and till are the same
 // path is the path of the HTTP request e.g "splitChanges", "segmentChanges"
-// segment is the segment name, will be empty when the end point is splitChanges
-func (binding *SplitioAPIBinding) getAllChanges(path string, segment string) ([]map[string]interface{}, int64, error) {
+func (binding *SplitioAPIBinding) getAllChanges(path string) ([]map[string]interface{}, int64, error) {
 	since := firstRequestSince
 	requestCount := 0
 	allChanges := []map[string]interface{}{}
 	for requestCount < defaultMaxRequestNum {
-		results, err := binding.httpGet(path, segment, since)
+		results, err := binding.httpGet(path, since)
 		if err != nil {
 			return nil, 0, err
 		}
