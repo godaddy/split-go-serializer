@@ -314,8 +314,12 @@ func TestGetSegmentValid(t *testing.T) {
 
 	// Validate that GetSegment function returns correct segment values
 	assert.Equal(t, segment.Name, "mock-segment")
+	assert.Equal(t, len(segment.Added), 4)
 	assert.Equal(t, valueTwoExists, false)
 	assert.Equal(t, valueFiveExists, true)
+	assert.Equal(t, segment.Since, int64(10))
+	assert.Equal(t, segment.Till, int64(10))
+	assert.Nil(t, segment.Removed)
 	assert.Nil(t, err)
 }
 
@@ -332,7 +336,7 @@ func TestGetSegmentReturnsDecodeError(t *testing.T) {
 
 	// Validate that GetSegment function returns decode error
 	assert.EqualError(t, err, "error when decode data to segment: 1 error(s) decoding:\n\n* 'Since' expected type 'int64', got unconvertible type 'string'")
-	assert.Equal(t, segment, Segment{})
+	assert.Equal(t, segment, dtos.SegmentChangesDTO{})
 }
 
 func TestGetSegmentReturnsGetAllChangesError(t *testing.T) {
@@ -348,7 +352,7 @@ func TestGetSegmentReturnsGetAllChangesError(t *testing.T) {
 
 	// Validate that GetSegment function returns GetAllChanges error
 	assert.EqualError(t, err, "Non-OK HTTP status: 401 Unauthorized")
-	assert.Equal(t, segment, Segment{})
+	assert.Equal(t, segment, dtos.SegmentChangesDTO{})
 }
 
 func TestGetSegmentsForSplitsReturnsGetSplitError(t *testing.T) {
@@ -368,7 +372,7 @@ func TestGetSegmentsForSplitsReturnsGetSplitError(t *testing.T) {
 
 	// Validate that GetSegmentForSplits function returns error from GetSegment
 	assert.EqualError(t, err, "error when decode data to segment: 1 error(s) decoding:\n\n* 'Since' expected type 'int64', got unconvertible type 'string'")
-	assert.Equal(t, segments, []Segment{})
+	assert.Equal(t, segments, []dtos.SegmentChangesDTO{})
 	assert.Equal(t, usingSegmentsCount, 0)
 }
 

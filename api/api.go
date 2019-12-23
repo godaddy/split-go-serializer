@@ -24,12 +24,6 @@ type SplitioAPIBinding struct {
 	splitioAPIUri string
 }
 
-// Segment contains segment name and a slice of added values
-type Segment struct {
-	Name  string   `json:"name"`
-	Added []string `json:"added"`
-}
-
 // NewSplitioAPIBinding returns a new SplitioAPIBinding
 func NewSplitioAPIBinding(apiKey string, apiURL string) *SplitioAPIBinding {
 	if apiURL == "" {
@@ -72,9 +66,9 @@ func (binding *SplitioAPIBinding) GetSplits() ([]dtos.SplitDTO, int64, error) {
 }
 
 // GetSegmentsForSplits return segment info and the count of splits using segment
-func (binding *SplitioAPIBinding) GetSegmentsForSplits(splits []dtos.SplitDTO) ([]Segment, int, error) {
+func (binding *SplitioAPIBinding) GetSegmentsForSplits(splits []dtos.SplitDTO) ([]dtos.SegmentChangesDTO, int, error) {
 	allSegmentNames := map[string]bool{}
-	segments := []Segment{}
+	segments := []dtos.SegmentChangesDTO{}
 	usingSegmentsCount := 0
 
 	for _, split := range splits {
@@ -178,10 +172,10 @@ func getSegmentNamesInUse(conditions []dtos.ConditionDTO) map[string]bool {
 }
 
 // Get info for single segment
-func (binding *SplitioAPIBinding) getSegment(segmentName string) (Segment, error) {
+func (binding *SplitioAPIBinding) getSegment(segmentName string) (dtos.SegmentChangesDTO, error) {
 	path := "segmentChanges"
-	segment := Segment{}
-	allChanges, _, err := binding.getAllChanges(fmt.Sprintf("%s/%s", path, segmentName))
+	segment := dtos.SegmentChangesDTO{}
+	allChanges, since, err := binding.getAllChanges(fmt.Sprintf("%s/%s", path, segmentName))
 	if err != nil {
 		return segment, err
 	}
@@ -209,8 +203,13 @@ func (binding *SplitioAPIBinding) getSegment(segmentName string) (Segment, error
 	for add := range addedMap {
 		adds = append(adds, add)
 	}
-	segment.Name = segmentName
-	segment.Added = adds
+
+	segment = dtos.SegmentChangesDTO{
+		Name:  segmentName,
+		Added: adds,
+		Since: since,
+		Till:  since,
+	}
 
 	return segment, nil
 
