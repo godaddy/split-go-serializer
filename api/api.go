@@ -189,24 +189,24 @@ func (binding *SplitioAPIBinding) getSegment(segmentName string) (dtos.SegmentCh
 			return segment, err
 		}
 
-		for _, add := range SegmentChanges.Added {
-			addedMap[add] = true
+		for _, id := range SegmentChanges.Added {
+			addedMap[id] = true
 		}
 
-		for _, remove := range SegmentChanges.Removed {
-			delete(addedMap, remove)
+		for _, id := range SegmentChanges.Removed {
+			delete(addedMap, id)
 		}
 
 	}
 
-	adds := []string{}
-	for add := range addedMap {
-		adds = append(adds, add)
+	ids := []string{}
+	for id := range addedMap {
+		ids = append(ids, id)
 	}
 
 	segment = dtos.SegmentChangesDTO{
 		Name:  segmentName,
-		Added: adds,
+		Added: ids,
 		Since: since,
 		Till:  since,
 	}
