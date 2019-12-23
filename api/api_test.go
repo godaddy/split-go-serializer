@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/splitio/go-client/splitio/service/dtos"
@@ -44,38 +45,36 @@ const (
 )
 
 type mockHandler struct {
-	count int
 }
 
 func (h *mockHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.RequestURI // e.g URI: "/splitCahges?since=-1"
+	since, _ := strconv.Atoi(path[len(path)-2:])
 	if path[:6] == "/split" {
-		if h.count == 0 {
+		if since == -1 {
 			fmt.Fprintln(w, `{"splits": [{"name":"mock-split-1", "killed": false},
 										 {"name":"mock-split-2"}],
 							  "since": -1, "till":10}`)
-		} else if h.count == 1 {
+		} else if since == 10 {
 			fmt.Fprintln(w, `{"splits": [{"name":"mock-split-1", "killed": true},
 										 {"name":"mock-split-2", "status":"ARCHIVED"},
 										 {"name":"mock-split-3"}, {"name":"mock-split-4"}],
 							  "since": 10, "till":20}`)
-		} else if h.count == 2 {
+		} else if since == 20 {
 			fmt.Fprintln(w, `{"splits": [], "since":20, "till":20}`)
 		}
 	} else if path[:8] == "/segment" {
-		if h.count == 0 {
+		if since == -1 {
 			fmt.Fprintln(w, `{"name": "mock-segment", "added": ["mock1","mock2","mock3","mock4"],
-			                  "removed": [], "since":-1, "till":5}`)
-		} else if h.count == 1 {
+			                  "removed": [], "since":-1, "till":35}`)
+		} else if since == 35 {
 			fmt.Fprintln(w, `{"name": "mock-segment", "added": ["mock5"], "removed": ["mock2"],
-			                  "since":5, "till":10}`)
-		} else if h.count == 2 {
+			                  "since":35, "till":40}`)
+		} else if since == 40 {
 			fmt.Fprintln(w, `{"name": "", "added": [], "removed": [],
-			                  "since":10, "till":10}`)
+			                  "since":40, "till":40}`)
 		}
 	}
-
-	h.count++
 }
 
 func TestNewSplitioAPIBindingValid(t *testing.T) {
@@ -317,8 +316,8 @@ func TestGetSegmentValid(t *testing.T) {
 	assert.Equal(t, len(segment.Added), 4)
 	assert.Equal(t, valueTwoExists, false)
 	assert.Equal(t, valueFiveExists, true)
-	assert.Equal(t, segment.Since, int64(10))
-	assert.Equal(t, segment.Till, int64(10))
+	assert.Equal(t, segment.Since, int64(40))
+	assert.Equal(t, segment.Till, int64(40))
 	assert.Nil(t, segment.Removed)
 	assert.Nil(t, err)
 }
