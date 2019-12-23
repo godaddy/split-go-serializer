@@ -65,9 +65,32 @@ func (binding *SplitioAPIBinding) GetSplits() ([]dtos.SplitDTO, int64, error) {
 	return splits, since, nil
 }
 
-// GetSegmentChanges will get segment data
-func (binding *SplitioAPIBinding) GetSegmentChanges() error {
-	return fmt.Errorf("not implemented")
+// GetSegmentsForSplits return segment info and the count of splits using segment
+func (binding *SplitioAPIBinding) GetSegmentsForSplits(splits []dtos.SplitDTO) ([]dtos.SegmentChangesDTO, int, error) {
+	allSegmentNames := map[string]bool{}
+	segments := []dtos.SegmentChangesDTO{}
+	usingSegmentsCount := 0
+
+	for _, split := range splits {
+		segmentNames := getSegmentNamesInUse(split.Conditions)
+		if len(segmentNames) > 0 {
+			usingSegmentsCount++
+		}
+		for segmentName := range segmentNames {
+			allSegmentNames[segmentName] = true
+		}
+	}
+
+	for segmentName := range allSegmentNames {
+		segment, err := binding.getSegment(segmentName)
+		if err != nil {
+			return segments, 0, err
+		}
+		segments = append(segments, segment)
+
+	}
+
+	return segments, usingSegmentsCount, nil
 }
 
 // httpGet makes a GET request to the Split.io SDK API.
@@ -145,5 +168,49 @@ func getSegmentNamesInUse(conditions []dtos.ConditionDTO) map[string]bool {
 	}
 
 	return segmentNames
+
+}
+
+// Get info for single segment
+func (binding *SplitioAPIBinding) getSegment(segmentName string) (dtos.SegmentChangesDTO, error) {
+	path := "segmentChanges"
+	segment := dtos.SegmentChangesDTO{}
+	allChanges, since, err := binding.getAllChanges(fmt.Sprintf("%s/%s", path, segmentName))
+	if err != nil {
+		return segment, err
+	}
+
+	addedMap := map[string]bool{}
+	for _, changes := range allChanges {
+		var SegmentChanges dtos.SegmentChangesDTO
+		err = mapstructure.Decode(changes, &SegmentChanges)
+		if err != nil {
+			err = fmt.Errorf("error when decode data to segment: %s", err)
+			return segment, err
+		}
+
+		for _, id := range SegmentChanges.Added {
+			addedMap[id] = true
+		}
+
+		for _, id := range SegmentChanges.Removed {
+			delete(addedMap, id)
+		}
+
+	}
+
+	ids := []string{}
+	for id := range addedMap {
+		ids = append(ids, id)
+	}
+
+	segment = dtos.SegmentChangesDTO{
+		Name:  segmentName,
+		Added: ids,
+		Since: since,
+		Till:  since,
+	}
+
+	return segment, nil
 
 }
