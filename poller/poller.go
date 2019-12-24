@@ -1,7 +1,9 @@
 package poller
 
 import (
+	"sync/atomic"
 	"time"
+	"unsafe"
 
 	"github.com/godaddy/split-go-serializer/api"
 	"github.com/splitio/go-client/splitio/service/dtos"
@@ -9,12 +11,12 @@ import (
 
 // Poller contains cache data, splitioDataGetter, and required info to interact with aplitio api
 type Poller struct {
-	Cache              Cache
 	Error              chan error
-	splitioDataGetter  api.SplitioDataGetter
+	splitioDataGetter  api.Splitio
 	pollingRateSeconds int
 	serializeSegments  bool
 	quit               chan bool
+	cache              unsafe.Pointer
 }
 
 // Cache contains Splits and Segments which is supposed to be updated periodically
@@ -26,15 +28,14 @@ type Cache struct {
 }
 
 // NewPoller returns a new Poller
-func NewPoller(splitioAPIKey string, pollingRateSeconds int, serializeSegments bool, splitioDataGetter api.SplitioDataGetter) *Poller {
+func NewPoller(splitioAPIKey string, pollingRateSeconds int, serializeSegments bool, splitioDataGetter api.Splitio) *Poller {
 	if pollingRateSeconds == 0 {
 		pollingRateSeconds = 300
 	}
-	if splitioDataGetter != nil {
-		return &Poller{Cache{}, make(chan error), splitioDataGetter, pollingRateSeconds, serializeSegments, make(chan bool)}
+	if splitioDataGetter == nil {
+		splitioDataGetter = api.NewSplitioAPIBinding(splitioAPIKey, "")
 	}
-	splitioAPIBinding := api.NewSplitioAPIBinding(splitioAPIKey, "")
-	return &Poller{Cache{}, make(chan error), splitioAPIBinding, pollingRateSeconds, serializeSegments, make(chan bool)}
+	return &Poller{make(chan error), splitioDataGetter, pollingRateSeconds, serializeSegments, make(chan bool), unsafe.Pointer(&Cache{})}
 }
 
 // pollForChanges updates the Cache with latest splits and segment
@@ -56,13 +57,20 @@ func (poller *Poller) pollForChanges() {
 		}
 	}
 
-	poller.Cache = Cache{
+	// Update Cache
+	updatedCache := Cache{
 		Splits:             splits,
 		Since:              since,
 		Segments:           segments,
 		UsingSegmentsCount: usingSegmentsCount,
 	}
+	atomic.StorePointer(&poller.cache, unsafe.Pointer(&updatedCache))
 
+}
+
+// GetCache returns cache results
+func (poller *Poller) GetCache() Cache {
+	return *(*Cache)(atomic.LoadPointer(&poller.cache))
 }
 
 // Start creates a goroutine and keep tracking until it stops
