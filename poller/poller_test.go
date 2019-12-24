@@ -24,7 +24,6 @@ type mockSplitioDataGetter struct {
 
 func (splitioDataGetter *mockSplitioDataGetter) GetSplits() ([]dtos.SplitDTO, int64, error) {
 	if splitioDataGetter.getSplitValid {
-		fmt.Println("return mock split in mockGetter", time.Now())
 		mockSplit := dtos.SplitDTO{Name: "mock-split"}
 		splitioDataGetter.mockSince++
 		return []dtos.SplitDTO{mockSplit}, splitioDataGetter.mockSince, nil
@@ -34,7 +33,6 @@ func (splitioDataGetter *mockSplitioDataGetter) GetSplits() ([]dtos.SplitDTO, in
 
 func (splitioDataGetter *mockSplitioDataGetter) GetSegmentsForSplits(splits []dtos.SplitDTO) ([]dtos.SegmentChangesDTO, int, error) {
 	if splitioDataGetter.getSegmentValid {
-		fmt.Println("return mock segment in mockGetter", time.Now())
 		mockSegment := dtos.SegmentChangesDTO{
 			Name: "mock-segment",
 		}
