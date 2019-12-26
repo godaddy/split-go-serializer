@@ -1,42 +1,80 @@
 package poller
 
 import (
+	"sync/atomic"
 	"time"
+	"unsafe"
 
 	"github.com/godaddy/split-go-serializer/api"
+	"github.com/splitio/go-client/splitio/service/dtos"
 )
 
-// Poller contains cache data and SplitioAPIBinding
+// Poller contains cache data, splitio, and required info to interact with aplitio api
 type Poller struct {
-	Cache              int
-	Error              error
-	splitioAPIBinding  api.SplitioAPIBinding
+	Error              chan error
+	splitio            api.Splitio
 	pollingRateSeconds int
 	serializeSegments  bool
 	quit               chan bool
+	cache              unsafe.Pointer
+}
+
+// Cache contains Splits and Segments which is supposed to be updated periodically
+type Cache struct {
+	Splits             []dtos.SplitDTO
+	Since              int64
+	Segments           []dtos.SegmentChangesDTO
+	UsingSegmentsCount int
 }
 
 // NewPoller returns a new Poller
-func NewPoller(splitioAPIKey string, pollingRateSeconds int, serializeSegments bool) *Poller {
+func NewPoller(splitioAPIKey string, pollingRateSeconds int, serializeSegments bool, splitio api.Splitio) *Poller {
 	if pollingRateSeconds == 0 {
 		pollingRateSeconds = 300
 	}
-	splitioAPIBinding := api.NewSplitioAPIBinding(splitioAPIKey, "")
-	return &Poller{0, nil, *splitioAPIBinding, pollingRateSeconds, serializeSegments, make(chan bool)}
+	if splitio == nil {
+		splitio = api.NewSplitioAPIBinding(splitioAPIKey, "")
+	}
+	return &Poller{make(chan error), splitio, pollingRateSeconds, serializeSegments, make(chan bool), unsafe.Pointer(&Cache{})}
 }
 
-// pollForChanges will get the latest data of splits and segment
+// pollForChanges updates the Cache with latest splits and segment
 func (poller *Poller) pollForChanges() {
-	// TODO: call getSplits and getSegments to formulate the cache
-	// if any of the returned splits/segments have error:
-	// 1. pass the error to poller.Error and log the error
-	// 2. if cache updates successfully, set poller.Error to nil
-	poller.Cache++
+	binding := poller.splitio
+	splits, since, err := binding.GetSplits()
+	if err != nil {
+		poller.Error <- err
+		return
+	}
+
+	segments := []dtos.SegmentChangesDTO{}
+	usingSegmentsCount := 0
+	if poller.serializeSegments {
+		segments, usingSegmentsCount, err = binding.GetSegmentsForSplits(splits)
+		if err != nil {
+			poller.Error <- err
+			return
+		}
+	}
+
+	// Update Cache
+	updatedCache := Cache{
+		Splits:             splits,
+		Since:              since,
+		Segments:           segments,
+		UsingSegmentsCount: usingSegmentsCount,
+	}
+	atomic.StorePointer(&poller.cache, unsafe.Pointer(&updatedCache))
+
+}
+
+// GetCache returns cache results
+func (poller *Poller) GetCache() Cache {
+	return *(*Cache)(atomic.LoadPointer(&poller.cache))
 }
 
 // Start creates a goroutine and keep tracking until it stops
 func (poller *Poller) Start() {
-	poller.Error = nil
 	poller.pollForChanges()
 	go poller.jobs()
 }

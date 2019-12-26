@@ -15,7 +15,7 @@ const (
 func TestNewSerializerValid(t *testing.T) {
 	// Arrange
 	pollingRateSeconds := 400
-	testPoller := poller.NewPoller(testKey, pollingRateSeconds, serializeSegments)
+	testPoller := poller.NewPoller(testKey, pollingRateSeconds, serializeSegments, nil)
 
 	// Act
 	result := NewSerializer(testPoller)
@@ -27,7 +27,7 @@ func TestNewSerializerValid(t *testing.T) {
 func TestGetSerializedDataReturnsError(t *testing.T) {
 	// Arrange
 	pollingRateSeconds := 400
-	testPoller := poller.NewPoller(testKey, pollingRateSeconds, serializeSegments)
+	testPoller := poller.NewPoller(testKey, pollingRateSeconds, serializeSegments, nil)
 
 	// Act
 	result := NewSerializer(testPoller)

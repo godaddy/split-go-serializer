@@ -18,6 +18,12 @@ const (
 	defaultMaxRequestNum = 100
 )
 
+// Splitio interface continas two functions to get Splits and Segments
+type Splitio interface {
+	GetSplits() ([]dtos.SplitDTO, int64, error)
+	GetSegmentsForSplits([]dtos.SplitDTO) ([]dtos.SegmentChangesDTO, int, error)
+}
+
 // SplitioAPIBinding contains splitioAPIKey
 type SplitioAPIBinding struct {
 	splitioAPIKey string
