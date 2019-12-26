@@ -24,9 +24,9 @@ func (fetcher *mockFetcher) Start() {
 func (fetcher *mockFetcher) Stop() {
 }
 
-func (fetcher *mockFetcher) GetCache() poller.Cache {
+func (fetcher *mockFetcher) GetCache() poller.SplitData {
 	if !fetcher.hasData {
-		return poller.Cache{}
+		return poller.SplitData{}
 	}
 
 	mockSplits := []dtos.SplitDTO{
@@ -43,7 +43,7 @@ func (fetcher *mockFetcher) GetCache() poller.Cache {
 			Till:  20,
 		},
 	}
-	testCache := poller.Cache{
+	testCache := poller.SplitData{
 		Splits:             mockSplits,
 		Since:              1,
 		Segments:           mockSegments,
@@ -73,9 +73,8 @@ func TestGetSerializedDataValid(t *testing.T) {
 	result, err := serializer.GetSerializedData()
 
 	// Validate that returned logging script contains a valid Cache data
-	expectedStringOfSplits := "[{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-1\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-1\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}]"
-	expectedStringOfSegments := "[{\"name\":\"mock-segment-1\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}]"
-	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, expectedStringOfSplits, 1, expectedStringOfSegments, 2)
+	expectedData := "{\"Splits\":[{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-1\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-1\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}],\"Since\":1,\"Segments\":[{\"name\":\"mock-segment-1\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}],\"UsingSegmentsCount\":2}"
+	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, expectedData)
 	assert.Equal(t, result, expectedLoggingScript)
 	assert.Nil(t, err)
 }
@@ -88,7 +87,8 @@ func TestGetSerializedDataMarshalEmptyCache(t *testing.T) {
 	result, err := serializer.GetSerializedData()
 
 	// Validate that returned logging script contains a valid Cache data
-	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, "null", 0, "null", 0)
+	expectedData := "{\"Splits\":null,\"Since\":0,\"Segments\":null,\"UsingSegmentsCount\":0}"
+	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, expectedData)
 	assert.Equal(t, result, expectedLoggingScript)
 	assert.Nil(t, err)
 }

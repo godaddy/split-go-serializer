@@ -92,7 +92,7 @@ func TestStartValid(t *testing.T) {
 
 	// Validate that after calling Start the cache is updated
 	cacheBeforeStart := result.GetCache()
-	assert.Equal(t, cacheBeforeStart, Cache{})
+	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
 	result.Start()
@@ -175,7 +175,7 @@ func TestJobsCanRunTwiceAfterStop(t *testing.T) {
 
 	// First loop
 	cacheBeforeStart := result.GetCache()
-	assert.Equal(t, cacheBeforeStart, Cache{})
+	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
 	go result.jobs()
@@ -218,7 +218,7 @@ func TestPollforChangesReturnsGetSplitsError(t *testing.T) {
 
 	// Validate that error is received when getSplits returns error and cache isn't updated
 	cacheBeforeStart := result.GetCache()
-	assert.Equal(t, cacheBeforeStart, Cache{})
+	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
 	go result.jobs()
@@ -227,7 +227,7 @@ func TestPollforChangesReturnsGetSplitsError(t *testing.T) {
 		hasErr = true
 	}
 	cacheAfterError := result.GetCache()
-	assert.Equal(t, cacheAfterError, Cache{})
+	assert.Equal(t, cacheAfterError, SplitData{})
 	assert.Equal(t, cacheAfterError.Since, int64(0))
 	assert.Equal(t, cacheAfterError.UsingSegmentsCount, 0)
 	assert.True(t, hasErr)
@@ -247,7 +247,7 @@ func TestPollforChangesReturnsGetSegmentsError(t *testing.T) {
 
 	// Validate that error is received when getSegments returns error and cache isn't updated
 	cacheBeforeStart := result.GetCache()
-	assert.Equal(t, cacheBeforeStart, Cache{})
+	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
 	go result.jobs()
@@ -256,7 +256,7 @@ func TestPollforChangesReturnsGetSegmentsError(t *testing.T) {
 		hasErr = true
 	}
 	cacheAfterError := result.GetCache()
-	assert.Equal(t, cacheAfterError, Cache{})
+	assert.Equal(t, cacheAfterError, SplitData{})
 	assert.Equal(t, cacheAfterError.Since, int64(0))
 	assert.Equal(t, cacheAfterError.UsingSegmentsCount, 0)
 	assert.True(t, hasErr)
@@ -281,7 +281,7 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 
 	// first loop
 	cacheBeforeStart := result.GetCache()
-	assert.Equal(t, cacheBeforeStart, Cache{})
+	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
 	go result.jobs()
@@ -290,7 +290,7 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 		hasErr = true
 	}
 	cacheAfterError := result.GetCache()
-	assert.Equal(t, cacheAfterError, Cache{})
+	assert.Equal(t, cacheAfterError, SplitData{})
 	assert.Equal(t, cacheAfterError.Since, int64(0))
 	assert.Equal(t, cacheAfterError.UsingSegmentsCount, 0)
 	assert.True(t, hasErr)

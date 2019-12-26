@@ -13,7 +13,7 @@ import (
 type Fetcher interface {
 	Start()
 	Stop()
-	GetCache() Cache
+	GetCache() SplitData
 }
 
 // Poller implements Fetcher and contains cache pointer, splitio, and required info to interact with aplitio api
@@ -26,8 +26,8 @@ type Poller struct {
 	cache              unsafe.Pointer
 }
 
-// Cache contains Splits and Segments which is supposed to be updated periodically
-type Cache struct {
+// SplitData contains Splits and Segments which is supposed to be updated periodically
+type SplitData struct {
 	Splits             []dtos.SplitDTO
 	Since              int64
 	Segments           []dtos.SegmentChangesDTO
@@ -42,7 +42,7 @@ func NewPoller(splitioAPIKey string, pollingRateSeconds int, serializeSegments b
 	if splitio == nil {
 		splitio = api.NewSplitioAPIBinding(splitioAPIKey, "")
 	}
-	return &Poller{make(chan error), splitio, pollingRateSeconds, serializeSegments, make(chan bool), unsafe.Pointer(&Cache{})}
+	return &Poller{make(chan error), splitio, pollingRateSeconds, serializeSegments, make(chan bool), unsafe.Pointer(&SplitData{})}
 }
 
 // pollForChanges updates the Cache with latest splits and segment
@@ -65,7 +65,7 @@ func (poller *Poller) pollForChanges() {
 	}
 
 	// Update Cache
-	updatedCache := Cache{
+	updatedCache := SplitData{
 		Splits:             splits,
 		Since:              since,
 		Segments:           segments,
@@ -75,9 +75,9 @@ func (poller *Poller) pollForChanges() {
 
 }
 
-// GetCache returns cache results
-func (poller *Poller) GetCache() Cache {
-	return *(*Cache)(atomic.LoadPointer(&poller.cache))
+// GetCache returns cache results of SplitData
+func (poller *Poller) GetCache() SplitData {
+	return *(*SplitData)(atomic.LoadPointer(&poller.cache))
 }
 
 // Start creates a goroutine and keep tracking until it stops
