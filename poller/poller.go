@@ -9,7 +9,14 @@ import (
 	"github.com/splitio/go-client/splitio/service/dtos"
 )
 
-// Poller contains cache data, splitio, and required info to interact with aplitio api
+// Fetcher is an interface contains GetCache, Start and Stop functions
+type Fetcher interface {
+	Start()
+	Stop()
+	GetCache() Cache
+}
+
+// Poller implements Fetcher and contains cache pointer, splitio, and required info to interact with aplitio api
 type Poller struct {
 	Error              chan error
 	splitio            api.Splitio
