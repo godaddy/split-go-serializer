@@ -15,29 +15,29 @@ const (
 	serializeSegments = true
 )
 
-type mockSplitioDataGetter struct {
+type mockSplitio struct {
 	mockSince              int64
 	mockUsingSegmentsCount int
 	getSplitValid          bool
 	getSegmentValid        bool
 }
 
-func (splitioDataGetter *mockSplitioDataGetter) GetSplits() ([]dtos.SplitDTO, int64, error) {
-	if splitioDataGetter.getSplitValid {
+func (splitio *mockSplitio) GetSplits() ([]dtos.SplitDTO, int64, error) {
+	if splitio.getSplitValid {
 		mockSplit := dtos.SplitDTO{Name: "mock-split"}
-		splitioDataGetter.mockSince++
-		return []dtos.SplitDTO{mockSplit}, splitioDataGetter.mockSince, nil
+		splitio.mockSince++
+		return []dtos.SplitDTO{mockSplit}, splitio.mockSince, nil
 	}
 	return nil, 0, fmt.Errorf("Error from splitio API when getting splits")
 }
 
-func (splitioDataGetter *mockSplitioDataGetter) GetSegmentsForSplits(splits []dtos.SplitDTO) ([]dtos.SegmentChangesDTO, int, error) {
-	if splitioDataGetter.getSegmentValid {
+func (splitio *mockSplitio) GetSegmentsForSplits(splits []dtos.SplitDTO) ([]dtos.SegmentChangesDTO, int, error) {
+	if splitio.getSegmentValid {
 		mockSegment := dtos.SegmentChangesDTO{
 			Name: "mock-segment",
 		}
-		splitioDataGetter.mockUsingSegmentsCount++
-		return []dtos.SegmentChangesDTO{mockSegment}, splitioDataGetter.mockUsingSegmentsCount, nil
+		splitio.mockUsingSegmentsCount++
+		return []dtos.SegmentChangesDTO{mockSegment}, splitio.mockUsingSegmentsCount, nil
 	}
 	return nil, 0, fmt.Errorf("Error from splitio API when getting segments")
 }
@@ -52,7 +52,7 @@ func TestNewPollerValid(t *testing.T) {
 	// Validate that returned Poller has the correct type and values
 	assert.Equal(t, result.pollingRateSeconds, pollingRateSeconds)
 	assert.Equal(t, result.serializeSegments, serializeSegments)
-	assert.IsType(t, result.splitioDataGetter, &api.SplitioAPIBinding{})
+	assert.IsType(t, result.splitio, &api.SplitioAPIBinding{})
 }
 
 func TestNewSerializerDefaultPollingRateSeconds(t *testing.T) {
@@ -73,7 +73,7 @@ func TestPollforChangesValid(t *testing.T) {
 
 	//Act
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments,
-		&mockSplitioDataGetter{getSplitValid: true, getSegmentValid: true})
+		&mockSplitio{getSplitValid: true, getSegmentValid: true})
 	result.pollForChanges()
 	returnedCache := result.GetCache()
 
@@ -88,7 +88,7 @@ func TestStartValid(t *testing.T) {
 
 	//Act
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments,
-		&mockSplitioDataGetter{getSplitValid: true, getSegmentValid: true})
+		&mockSplitio{getSplitValid: true, getSegmentValid: true})
 
 	// Validate that after calling Start the cache is updated
 	cacheBeforeStart := result.GetCache()
@@ -109,7 +109,7 @@ func TestStopValid(t *testing.T) {
 
 	//Act
 	result := NewPoller(testKey, pollingRateSeconds, false,
-		&mockSplitioDataGetter{getSplitValid: true})
+		&mockSplitio{getSplitValid: true})
 
 	// Validate that when Stop is called, jobs will stop
 	cacheBeforeStart := result.GetCache()
@@ -129,7 +129,7 @@ func TestJobsUpdatesCache(t *testing.T) {
 
 	//Act
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments,
-		&mockSplitioDataGetter{getSplitValid: true, getSegmentValid: true})
+		&mockSplitio{getSplitValid: true, getSegmentValid: true})
 
 	// Validate that after calling jobs the cache is updated
 	cacheBeforeStart := result.GetCache()
@@ -149,7 +149,7 @@ func TestJobsStopsWhenQuit(t *testing.T) {
 
 	//Act
 	result := NewPoller(testKey, pollingRateSeconds, false,
-		&mockSplitioDataGetter{getSplitValid: true})
+		&mockSplitio{getSplitValid: true})
 
 	// Validate that Jobs stop if quit is set to true
 	cacheBeforeStart := result.GetCache()
@@ -169,7 +169,7 @@ func TestJobsCanRunTwiceAfterStop(t *testing.T) {
 
 	//Act
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments,
-		&mockSplitioDataGetter{getSplitValid: true, getSegmentValid: true})
+		&mockSplitio{getSplitValid: true, getSegmentValid: true})
 
 	// Validate that jobs can be run more than once
 
@@ -212,7 +212,7 @@ func TestPollforChangesReturnsGetSplitsError(t *testing.T) {
 
 	//Act
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments,
-		&mockSplitioDataGetter{getSplitValid: false, getSegmentValid: false})
+		&mockSplitio{getSplitValid: false, getSegmentValid: false})
 	hasErr := false
 	var err error
 
@@ -241,7 +241,7 @@ func TestPollforChangesReturnsGetSegmentsError(t *testing.T) {
 
 	//Act
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments,
-		&mockSplitioDataGetter{getSplitValid: true, getSegmentValid: false})
+		&mockSplitio{getSplitValid: true, getSegmentValid: false})
 	hasErr := false
 	var err error
 
@@ -267,7 +267,7 @@ func TestPollforChangesReturnsGetSegmentsError(t *testing.T) {
 func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 	// Arrange
 	pollingRateSeconds := 1
-	mockSplitioDataGetter := &mockSplitioDataGetter{
+	mockSplitioDataGetter := &mockSplitio{
 		getSplitValid: false,
 	}
 

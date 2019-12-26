@@ -9,10 +9,10 @@ import (
 	"github.com/splitio/go-client/splitio/service/dtos"
 )
 
-// Poller contains cache data, splitioDataGetter, and required info to interact with aplitio api
+// Poller contains cache data, splitio, and required info to interact with aplitio api
 type Poller struct {
 	Error              chan error
-	splitioDataGetter  api.Splitio
+	splitio            api.Splitio
 	pollingRateSeconds int
 	serializeSegments  bool
 	quit               chan bool
@@ -28,19 +28,19 @@ type Cache struct {
 }
 
 // NewPoller returns a new Poller
-func NewPoller(splitioAPIKey string, pollingRateSeconds int, serializeSegments bool, splitioDataGetter api.Splitio) *Poller {
+func NewPoller(splitioAPIKey string, pollingRateSeconds int, serializeSegments bool, splitio api.Splitio) *Poller {
 	if pollingRateSeconds == 0 {
 		pollingRateSeconds = 300
 	}
-	if splitioDataGetter == nil {
-		splitioDataGetter = api.NewSplitioAPIBinding(splitioAPIKey, "")
+	if splitio == nil {
+		splitio = api.NewSplitioAPIBinding(splitioAPIKey, "")
 	}
-	return &Poller{make(chan error), splitioDataGetter, pollingRateSeconds, serializeSegments, make(chan bool), unsafe.Pointer(&Cache{})}
+	return &Poller{make(chan error), splitio, pollingRateSeconds, serializeSegments, make(chan bool), unsafe.Pointer(&Cache{})}
 }
 
 // pollForChanges updates the Cache with latest splits and segment
 func (poller *Poller) pollForChanges() {
-	binding := poller.splitioDataGetter
+	binding := poller.splitio
 	splits, since, err := binding.GetSplits()
 	if err != nil {
 		poller.Error <- err
