@@ -41,7 +41,7 @@ const (
             ]
           }
         }
-    ]`
+	]`
 )
 
 type mockHandler struct {
@@ -238,6 +238,35 @@ func TestGetSplitsValid(t *testing.T) {
 	assert.Equal(t, splitOneKilled, true)
 	assert.Equal(t, splitTwoExist, false)
 	assert.Equal(t, len(splits), 3)
+	assert.Nil(t, err)
+}
+
+func TestGetSplitsDecodesCorrectly(t *testing.T) {
+	// Arrange
+	mockSplits := fmt.Sprintf(`{"splits":[{"conditions":%v}], "since": 1, "till": 1}`, mockConditions)
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, mockSplits)
+	}))
+	defer testServer.Close()
+	result := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
+
+	// Act
+	splits, _, err := result.GetSplits()
+	split := splits[0]
+	conditions := split.Conditions
+	var segmentName string
+	for _, condition := range conditions {
+		for _, matcher := range condition.MatcherGroup.Matchers {
+			if matcher.MatcherType == "IN_SEGMENT" {
+				// Note: UserDefinedSegment can't be recognized if not setting tagName to json
+				segmentName = matcher.UserDefinedSegment.SegmentName
+			}
+		}
+	}
+
+	// Validate that GetSplits decodes correctly
+	assert.Equal(t, len(splits), 1)
+	assert.Equal(t, segmentName, "mock-segment")
 	assert.Nil(t, err)
 }
 
