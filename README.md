@@ -29,8 +29,8 @@ Create an instance of `Poller` and `Serializer` by importing the `poller` and `s
 
 ```go
 import (
-    "github.com/wendychiang/test-go/poller"
-    "github.com/wendychiang/test-go/serializer"
+    "github.com/godaddy/split-go-serializer/poller"
+    "github.com/godaddy/split-go-serializer/serializer"
 )
 
 poller := poller.NewPoller("YOUR_API_KEY", 600, false, nil)
@@ -41,7 +41,7 @@ The following option properties are available to the `Poller`:
 
 | Property                      | Description |
 |-------------------------------|-------------|
-| splitioApiKey | The Split.io SDK key for the environment your app is running in. Can be requested in `#experimentation` on slack (required). |
+| splitioApiKey | The Split.io SDK key for the environment your app is running in. (required) |
 | pollingRateSeconds | The interval at which to poll Split.io. Defaults to 300 (5 minutes). |
 | serializeSegments | Whether or not to fetch segment configuration data. Defaults to false.|
 
