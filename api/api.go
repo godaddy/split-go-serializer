@@ -49,14 +49,20 @@ func (binding *SplitioAPIBinding) GetSplits() ([]dtos.SplitDTO, int64, error) {
 	}
 
 	for _, changes := range allChanges {
-		var result dtos.SplitChangesDTO
-		err = mapstructure.Decode(changes, &result)
+		var splitChanges dtos.SplitChangesDTO
+		config := &mapstructure.DecoderConfig{TagName: "json", Result: &splitChanges}
+		decoder, err := mapstructure.NewDecoder(config)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		err = decoder.Decode(changes)
 		if err != nil {
 			err = fmt.Errorf("error when decode data to split: %s", err)
 			return nil, 0, err
 		}
 
-		for _, split := range result.Splits {
+		for _, split := range splitChanges.Splits {
 			if split.Status == "ARCHIVED" {
 				delete(splitsMap, split.Name)
 			} else {
@@ -188,18 +194,25 @@ func (binding *SplitioAPIBinding) getSegment(segmentName string) (dtos.SegmentCh
 
 	addedMap := map[string]bool{}
 	for _, changes := range allChanges {
-		var SegmentChanges dtos.SegmentChangesDTO
-		err = mapstructure.Decode(changes, &SegmentChanges)
+		var segmentChanges dtos.SegmentChangesDTO
+
+		config := &mapstructure.DecoderConfig{TagName: "json", Result: &segmentChanges}
+		decoder, err := mapstructure.NewDecoder(config)
+		if err != nil {
+			return segment, err
+		}
+
+		err = decoder.Decode(changes)
 		if err != nil {
 			err = fmt.Errorf("error when decode data to segment: %s", err)
 			return segment, err
 		}
 
-		for _, id := range SegmentChanges.Added {
+		for _, id := range segmentChanges.Added {
 			addedMap[id] = true
 		}
 
-		for _, id := range SegmentChanges.Removed {
+		for _, id := range segmentChanges.Removed {
 			delete(addedMap, id)
 		}
 

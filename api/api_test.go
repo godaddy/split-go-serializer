@@ -272,7 +272,7 @@ func TestGetSplitsReturnsDecodeError(t *testing.T) {
 	// Validate that GetSplits returns decode error
 	assert.Equal(t, since, int64(0))
 	assert.Nil(t, splits)
-	assert.EqualError(t, err, "error when decode data to split: 1 error(s) decoding:\n\n* 'Since' expected type 'int64', got unconvertible type 'string'")
+	assert.EqualError(t, err, "error when decode data to split: 1 error(s) decoding:\n\n* 'since' expected type 'int64', got unconvertible type 'string'")
 }
 
 func TestGetSegmentNamesInUseValid(t *testing.T) {
@@ -334,7 +334,7 @@ func TestGetSegmentReturnsDecodeError(t *testing.T) {
 	segment, err := result.getSegment("mock-segment-name")
 
 	// Validate that GetSegment function returns decode error
-	assert.EqualError(t, err, "error when decode data to segment: 1 error(s) decoding:\n\n* 'Since' expected type 'int64', got unconvertible type 'string'")
+	assert.EqualError(t, err, "error when decode data to segment: 1 error(s) decoding:\n\n* 'since' expected type 'int64', got unconvertible type 'string'")
 	assert.Equal(t, segment, dtos.SegmentChangesDTO{})
 }
 
@@ -370,7 +370,7 @@ func TestGetSegmentsForSplitsReturnsGetSplitError(t *testing.T) {
 	segments, usingSegmentsCount, err := result.GetSegmentsForSplits(splits)
 
 	// Validate that GetSegmentForSplits function returns error from GetSegment
-	assert.EqualError(t, err, "error when decode data to segment: 1 error(s) decoding:\n\n* 'Since' expected type 'int64', got unconvertible type 'string'")
+	assert.EqualError(t, err, "error when decode data to segment: 1 error(s) decoding:\n\n* 'since' expected type 'int64', got unconvertible type 'string'")
 	assert.Equal(t, segments, []dtos.SegmentChangesDTO{})
 	assert.Equal(t, usingSegmentsCount, 0)
 }
