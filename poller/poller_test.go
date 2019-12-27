@@ -75,7 +75,7 @@ func TestPollforChangesValid(t *testing.T) {
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments,
 		&mockSplitio{getSplitValid: true, getSegmentValid: true})
 	result.pollForChanges()
-	returnedCache := result.GetCache()
+	returnedCache := result.GetSplitData()
 
 	// Validate that after calling PollforChanges it returns the right value
 	assert.Equal(t, int64(1), returnedCache.Since)
@@ -91,13 +91,13 @@ func TestStartValid(t *testing.T) {
 		&mockSplitio{getSplitValid: true, getSegmentValid: true})
 
 	// Validate that after calling Start the cache is updated
-	cacheBeforeStart := result.GetCache()
+	cacheBeforeStart := result.GetSplitData()
 	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
 	result.Start()
 	time.Sleep(2 * time.Second)
-	cacheAfterStart := result.GetCache()
+	cacheAfterStart := result.GetSplitData()
 	assert.True(t, cacheAfterStart.Since > 1)
 	assert.True(t, cacheAfterStart.UsingSegmentsCount > 0)
 	result.quit <- true
@@ -112,15 +112,15 @@ func TestStopValid(t *testing.T) {
 		&mockSplitio{getSplitValid: true})
 
 	// Validate that when Stop is called, jobs will stop
-	cacheBeforeStart := result.GetCache()
+	cacheBeforeStart := result.GetSplitData()
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	go result.jobs()
 	time.Sleep(2 * time.Second)
 	result.Stop()
-	cacheAfterStop := result.GetCache()
+	cacheAfterStop := result.GetSplitData()
 	assert.True(t, cacheAfterStop.Since > 0)
 	time.Sleep(2 * time.Second)
-	assert.Equal(t, cacheAfterStop.Since, result.GetCache().Since)
+	assert.Equal(t, cacheAfterStop.Since, result.GetSplitData().Since)
 }
 
 func TestJobsUpdatesCache(t *testing.T) {
@@ -132,12 +132,12 @@ func TestJobsUpdatesCache(t *testing.T) {
 		&mockSplitio{getSplitValid: true, getSegmentValid: true})
 
 	// Validate that after calling jobs the cache is updated
-	cacheBeforeStart := result.GetCache()
+	cacheBeforeStart := result.GetSplitData()
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
 	go result.jobs()
 	time.Sleep(2 * time.Second)
-	cacheAfterStart := result.GetCache()
+	cacheAfterStart := result.GetSplitData()
 	assert.True(t, cacheAfterStart.Since > 0)
 	assert.True(t, cacheAfterStart.UsingSegmentsCount > 0)
 	result.quit <- true
@@ -152,15 +152,15 @@ func TestJobsStopsWhenQuit(t *testing.T) {
 		&mockSplitio{getSplitValid: true})
 
 	// Validate that Jobs stop if quit is set to true
-	cacheBeforeStart := result.GetCache()
+	cacheBeforeStart := result.GetSplitData()
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	go result.jobs()
 	time.Sleep(2 * time.Second)
-	assert.True(t, result.GetCache().Since > 0)
+	assert.True(t, result.GetSplitData().Since > 0)
 	result.quit <- true
-	cacheAfterStop := result.GetCache()
+	cacheAfterStop := result.GetSplitData()
 	time.Sleep(2 * time.Second)
-	assert.Equal(t, cacheAfterStop.Since, result.GetCache().Since)
+	assert.Equal(t, cacheAfterStop.Since, result.GetSplitData().Since)
 }
 
 func TestJobsCanRunTwiceAfterStop(t *testing.T) {
@@ -174,7 +174,7 @@ func TestJobsCanRunTwiceAfterStop(t *testing.T) {
 	// Validate that jobs can be run more than once
 
 	// First loop
-	cacheBeforeStart := result.GetCache()
+	cacheBeforeStart := result.GetSplitData()
 	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
@@ -182,27 +182,27 @@ func TestJobsCanRunTwiceAfterStop(t *testing.T) {
 	time.Sleep(3 * time.Second)
 
 	// assert loop calls function so cache is updated
-	cacheAfterStart := result.GetCache()
+	cacheAfterStart := result.GetSplitData()
 	assert.True(t, cacheAfterStart.Since > 0)
 	assert.True(t, cacheAfterStart.UsingSegmentsCount > 0)
 	assert.Equal(t, cacheAfterStart.Splits[0].Name, "mock-split")
 	assert.Equal(t, cacheAfterStart.Segments[0].Name, "mock-segment")
 	result.Stop()
 
-	firstSince := result.GetCache().Since
-	firstCount := result.GetCache().UsingSegmentsCount
+	firstSince := result.GetSplitData().Since
+	firstCount := result.GetSplitData().UsingSegmentsCount
 	time.Sleep(3 * time.Second)
 	// verfify Cache didn't update after stop
-	assert.Equal(t, result.GetCache().Since, firstSince)
-	assert.Equal(t, result.GetCache().UsingSegmentsCount, firstCount)
+	assert.Equal(t, result.GetSplitData().Since, firstSince)
+	assert.Equal(t, result.GetSplitData().UsingSegmentsCount, firstCount)
 
 	// Second loop
 	go result.jobs()
 	time.Sleep(2 * time.Second)
 
 	// verfify cache is updated due to second loop
-	assert.True(t, result.GetCache().Since > firstSince)
-	assert.True(t, result.GetCache().UsingSegmentsCount > firstCount)
+	assert.True(t, result.GetSplitData().Since > firstSince)
+	assert.True(t, result.GetSplitData().UsingSegmentsCount > firstCount)
 	result.Stop()
 }
 
@@ -217,7 +217,7 @@ func TestPollforChangesReturnsGetSplitsError(t *testing.T) {
 	var err error
 
 	// Validate that error is received when getSplits returns error and cache isn't updated
-	cacheBeforeStart := result.GetCache()
+	cacheBeforeStart := result.GetSplitData()
 	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
@@ -226,7 +226,7 @@ func TestPollforChangesReturnsGetSplitsError(t *testing.T) {
 	if err != nil {
 		hasErr = true
 	}
-	cacheAfterError := result.GetCache()
+	cacheAfterError := result.GetSplitData()
 	assert.Equal(t, cacheAfterError, SplitData{})
 	assert.Equal(t, cacheAfterError.Since, int64(0))
 	assert.Equal(t, cacheAfterError.UsingSegmentsCount, 0)
@@ -246,7 +246,7 @@ func TestPollforChangesReturnsGetSegmentsError(t *testing.T) {
 	var err error
 
 	// Validate that error is received when getSegments returns error and cache isn't updated
-	cacheBeforeStart := result.GetCache()
+	cacheBeforeStart := result.GetSplitData()
 	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
@@ -255,7 +255,7 @@ func TestPollforChangesReturnsGetSegmentsError(t *testing.T) {
 	if err != nil {
 		hasErr = true
 	}
-	cacheAfterError := result.GetCache()
+	cacheAfterError := result.GetSplitData()
 	assert.Equal(t, cacheAfterError, SplitData{})
 	assert.Equal(t, cacheAfterError.Since, int64(0))
 	assert.Equal(t, cacheAfterError.UsingSegmentsCount, 0)
@@ -280,7 +280,7 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 	// Validate that after first time error cache can still be updated
 
 	// first loop
-	cacheBeforeStart := result.GetCache()
+	cacheBeforeStart := result.GetSplitData()
 	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
@@ -289,7 +289,7 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 	if err != nil {
 		hasErr = true
 	}
-	cacheAfterError := result.GetCache()
+	cacheAfterError := result.GetSplitData()
 	assert.Equal(t, cacheAfterError, SplitData{})
 	assert.Equal(t, cacheAfterError.Since, int64(0))
 	assert.Equal(t, cacheAfterError.UsingSegmentsCount, 0)
@@ -300,7 +300,7 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 	mockSplitioDataGetter.getSplitValid = true
 	mockSplitioDataGetter.getSegmentValid = true
 	time.Sleep(5 * time.Second)
-	cacheSecondRound := result.GetCache()
+	cacheSecondRound := result.GetSplitData()
 	assert.True(t, cacheSecondRound.Since > 0)
 	assert.True(t, cacheSecondRound.UsingSegmentsCount > 0)
 	assert.Equal(t, cacheSecondRound.Splits[0].Name, "mock-split")

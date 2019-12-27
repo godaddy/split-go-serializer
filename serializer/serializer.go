@@ -21,7 +21,7 @@ func NewSerializer(poller poller.Fetcher) *Serializer {
 
 // GetSerializedData serializes split and segment data into strings
 func (serializer *Serializer) GetSerializedData() (string, error) {
-	latestData := serializer.poller.GetCache()
+	latestData := serializer.poller.GetSplitData()
 	splitCachePreload, err := json.Marshal(latestData)
 	if err != nil {
 		return "", err

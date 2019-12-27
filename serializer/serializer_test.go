@@ -24,7 +24,7 @@ func (fetcher *mockFetcher) Start() {
 func (fetcher *mockFetcher) Stop() {
 }
 
-func (fetcher *mockFetcher) GetCache() poller.SplitData {
+func (fetcher *mockFetcher) GetSplitData() poller.SplitData {
 	if !fetcher.hasData {
 		return poller.SplitData{}
 	}

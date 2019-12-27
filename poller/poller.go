@@ -9,11 +9,11 @@ import (
 	"github.com/splitio/go-client/splitio/service/dtos"
 )
 
-// Fetcher is an interface contains GetCache, Start and Stop functions
+// Fetcher is an interface contains GetSplitData, Start and Stop functions
 type Fetcher interface {
 	Start()
 	Stop()
-	GetCache() SplitData
+	GetSplitData() SplitData
 }
 
 // Poller implements Fetcher and contains cache pointer, splitio, and required info to interact with aplitio api
@@ -75,8 +75,8 @@ func (poller *Poller) pollForChanges() {
 
 }
 
-// GetCache returns cache results of SplitData
-func (poller *Poller) GetCache() SplitData {
+// GetSplitData returns cache results of SplitData
+func (poller *Poller) GetSplitData() SplitData {
 	return *(*SplitData)(atomic.LoadPointer(&poller.cache))
 }
 
