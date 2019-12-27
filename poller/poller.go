@@ -9,7 +9,14 @@ import (
 	"github.com/splitio/go-client/splitio/service/dtos"
 )
 
-// Poller contains cache data, splitio, and required info to interact with aplitio api
+// Fetcher is an interface contains GetSplitData, Start and Stop functions
+type Fetcher interface {
+	Start()
+	Stop()
+	GetSplitData() SplitData
+}
+
+// Poller implements Fetcher and contains cache pointer, splitio, and required info to interact with aplitio api
 type Poller struct {
 	Error              chan error
 	splitio            api.Splitio
@@ -19,8 +26,8 @@ type Poller struct {
 	cache              unsafe.Pointer
 }
 
-// Cache contains Splits and Segments which is supposed to be updated periodically
-type Cache struct {
+// SplitData contains Splits and Segments which is supposed to be updated periodically
+type SplitData struct {
 	Splits             []dtos.SplitDTO
 	Since              int64
 	Segments           []dtos.SegmentChangesDTO
@@ -35,7 +42,7 @@ func NewPoller(splitioAPIKey string, pollingRateSeconds int, serializeSegments b
 	if splitio == nil {
 		splitio = api.NewSplitioAPIBinding(splitioAPIKey, "")
 	}
-	return &Poller{make(chan error), splitio, pollingRateSeconds, serializeSegments, make(chan bool), unsafe.Pointer(&Cache{})}
+	return &Poller{make(chan error), splitio, pollingRateSeconds, serializeSegments, make(chan bool), unsafe.Pointer(&SplitData{})}
 }
 
 // pollForChanges updates the Cache with latest splits and segment
@@ -58,7 +65,7 @@ func (poller *Poller) pollForChanges() {
 	}
 
 	// Update Cache
-	updatedCache := Cache{
+	updatedCache := SplitData{
 		Splits:             splits,
 		Since:              since,
 		Segments:           segments,
@@ -68,9 +75,9 @@ func (poller *Poller) pollForChanges() {
 
 }
 
-// GetCache returns cache results
-func (poller *Poller) GetCache() Cache {
-	return *(*Cache)(atomic.LoadPointer(&poller.cache))
+// GetSplitData returns cache results of SplitData
+func (poller *Poller) GetSplitData() SplitData {
+	return *(*SplitData)(atomic.LoadPointer(&poller.cache))
 }
 
 // Start creates a goroutine and keep tracking until it stops
