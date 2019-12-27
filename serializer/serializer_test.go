@@ -72,7 +72,7 @@ func TestGetSerializedDataValid(t *testing.T) {
 	// Act
 	result, err := serializer.GetSerializedData()
 
-	// Validate that returned logging script contains a valid Cache data
+	// Validate that returned logging script contains a valid SplitData
 	expectedData := "{\"Splits\":[{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-1\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-1\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}],\"Since\":1,\"Segments\":[{\"name\":\"mock-segment-1\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}],\"UsingSegmentsCount\":2}"
 	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, expectedData)
 	assert.Equal(t, result, expectedLoggingScript)
@@ -86,7 +86,7 @@ func TestGetSerializedDataMarshalEmptyCache(t *testing.T) {
 	// Act
 	result, err := serializer.GetSerializedData()
 
-	// Validate that returned logging script contains a valid Cache data
+	// Validate that returned logging script contains a valid SplitData
 	expectedData := "{\"Splits\":null,\"Since\":0,\"Segments\":null,\"UsingSegmentsCount\":0}"
 	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, expectedData)
 	assert.Equal(t, result, expectedLoggingScript)
