@@ -2,8 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v1.0.1"></a>
+## [v1.0.1](github.com/godaddy/split-go-serializer/compare/v1.0.0...v1.0.1) (2019-12-30)
+
+### Fix
+
+* **api:** create decoder that sets tagName to json ([#10](github.com/godaddy/split-go-serializer/issues/10))
+
+
 <a name="v1.0.0"></a>
 ## v1.0.0 (2019-12-27)
+
+### Chore
+
+* **release:** 1.0.0
 
 ### Feat
 
