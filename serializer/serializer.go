@@ -3,6 +3,7 @@ package serializer
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/godaddy/split-go-serializer/poller"
 )
@@ -22,6 +23,10 @@ func NewSerializer(poller poller.Fetcher) *Serializer {
 // GetSerializedData serializes split and segment data into strings
 func (serializer *Serializer) GetSerializedData() (string, error) {
 	latestData := serializer.poller.GetSplitData()
+	if reflect.DeepEqual(latestData, poller.SplitData{}) {
+		return fmt.Sprintf(formattedLoggingScript, "{}"), nil
+	}
+
 	splitCachePreload, err := json.Marshal(latestData)
 	if err != nil {
 		return "", err

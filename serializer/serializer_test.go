@@ -87,7 +87,7 @@ func TestGetSerializedDataMarshalEmptyCache(t *testing.T) {
 	result, err := serializer.GetSerializedData()
 
 	// Validate that returned logging script contains a valid SplitData
-	expectedData := "{\"Splits\":null,\"Since\":0,\"Segments\":null,\"UsingSegmentsCount\":0}"
+	expectedData := "{}"
 	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, expectedData)
 	assert.Equal(t, result, expectedLoggingScript)
 	assert.Nil(t, err)
