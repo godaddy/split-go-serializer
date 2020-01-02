@@ -2,8 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v1.0.2"></a>
+## [v1.0.2](github.com/godaddy/split-go-serializer/compare/v1.0.1...v1.0.2) (2020-01-02)
+
+### Refactor
+
+* **serializer:** handle empty cache similar to node-serializer ([#11](github.com/godaddy/split-go-serializer/issues/11))
+
+
 <a name="v1.0.1"></a>
 ## [v1.0.1](github.com/godaddy/split-go-serializer/compare/v1.0.0...v1.0.1) (2019-12-30)
+
+### Chore
+
+* **release:** 1.0.1
 
 ### Fix
 
