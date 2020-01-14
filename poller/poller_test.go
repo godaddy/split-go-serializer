@@ -24,7 +24,7 @@ type mockSplitio struct {
 
 func (splitio *mockSplitio) GetSplits() (map[string]dtos.SplitDTO, int64, error) {
 	if splitio.getSplitValid {
-		mockSplit := dtos.SplitDTO{Name: "mock-split"}
+                mockSplit := dtos.SplitDTO{Name: "mock-split"}
                 mockSplitMap := map[string]dtos.SplitDTO{
                         "mock-split": mockSplit,
                 }
