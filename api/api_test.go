@@ -391,10 +391,10 @@ func TestGetSegmentsForSplitsReturnsGetSplitError(t *testing.T) {
 	defer testServer.Close()
 	conditions := []dtos.ConditionDTO{}
 	json.Unmarshal([]byte(mockConditions), &conditions)
-  split := dtos.SplitDTO{Name: "mock-split", Conditions: conditions}
-  splits := map[string]dtos.SplitDTO{
-    "mock-split": split,
-  }
+        split := dtos.SplitDTO{Name: "mock-split", Conditions: conditions}
+        splits := map[string]dtos.SplitDTO{
+                "mock-split": split,
+        }
 	result := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
 
 	// Act
@@ -414,9 +414,9 @@ func TestGetSegmentsForSplitsReturnsValid(t *testing.T) {
 	conditions := []dtos.ConditionDTO{}
 	json.Unmarshal([]byte(mockConditions), &conditions)
 	split := dtos.SplitDTO{Name: "mock-split", Conditions: conditions}
-  splits := map[string]dtos.SplitDTO{
-    "mock-split": split,
-  }
+        splits := map[string]dtos.SplitDTO{
+                "mock-split": split,
+        }
 	result := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
 
 	// Act

@@ -3,12 +3,19 @@ package serializer
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 
 	"github.com/godaddy/split-go-serializer/poller"
 )
 
-const formattedLoggingScript = `<script>window.__splitCachePreload = %s</script>`
+const formattedLoggingScript = `
+<script>
+  window.__splitCachePreload = {
+  splitsData: %v,
+  since: %v,
+  segmentsData: %v,
+  usingSegmentsCount: %v
+  };
+</script>`
 
 // Serializer contains poller
 type Serializer struct {
@@ -22,14 +29,20 @@ func NewSerializer(poller poller.Fetcher) *Serializer {
 
 // GetSerializedData serializes split and segment data into strings
 func (serializer *Serializer) GetSerializedData() (string, error) {
-	latestData := serializer.poller.GetSplitData()
-	if reflect.DeepEqual(latestData, poller.SplitData{}) {
-		return fmt.Sprintf(formattedLoggingScript, "{}"), nil
-	}
+        latestData := serializer.poller.GetSplitData()
 
-	splitCachePreload, err := json.Marshal(latestData)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf(formattedLoggingScript, string(splitCachePreload)), nil
+        marshalledSplits, err := json.Marshal(latestData.Splits)
+        if err != nil {
+                return "", err
+        }
+        stringifiedSplits := string(marshalledSplits)
+
+        marshalledSegments, err := json.Marshal(latestData.Segments)
+        if err != nil {
+                return "", err
+        }
+        stringifiedSegments := string(marshalledSegments)
+
+        return fmt.Sprintf(formattedLoggingScript, stringifiedSplits, latestData.Since,
+                stringifiedSegments, latestData.UsingSegmentsCount), nil
 }
