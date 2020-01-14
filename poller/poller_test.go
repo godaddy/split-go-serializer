@@ -28,7 +28,7 @@ func (splitio *mockSplitio) GetSplits() (map[string]dtos.SplitDTO, int64, error)
                 mockSplitMap := map[string]dtos.SplitDTO{
                         "mock-split": mockSplit,
                 }
-		splitio.mockSince++
+	        splitio.mockSince++
 		return mockSplitMap, splitio.mockSince, nil
 	}
 	return nil, 0, fmt.Errorf("Error from splitio API when getting splits")
