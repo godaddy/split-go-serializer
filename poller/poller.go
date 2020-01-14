@@ -28,9 +28,9 @@ type Poller struct {
 
 // SplitData contains Splits and Segments which is supposed to be updated periodically
 type SplitData struct {
-	Splits             []dtos.SplitDTO
+	Splits             map[string]dtos.SplitDTO
 	Since              int64
-	Segments           []dtos.SegmentChangesDTO
+	Segments           map[string]dtos.SegmentChangesDTO
 	UsingSegmentsCount int
 }
 
@@ -54,7 +54,7 @@ func (poller *Poller) pollForChanges() {
 		return
 	}
 
-	segments := []dtos.SegmentChangesDTO{}
+	segments := map[string]dtos.SegmentChangesDTO{}
 	usingSegmentsCount := 0
 	if poller.serializeSegments {
 		segments, usingSegmentsCount, err = binding.GetSegmentsForSplits(splits)

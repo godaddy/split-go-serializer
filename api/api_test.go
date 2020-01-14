@@ -243,7 +243,7 @@ func TestGetSplitsValid(t *testing.T) {
 
 func TestGetSplitsDecodesCorrectly(t *testing.T) {
 	// Arrange
-	mockSplits := fmt.Sprintf(`{"splits":[{"conditions":%v}], "since": 1, "till": 1}`, mockConditions)
+	mockSplits := fmt.Sprintf(`{"splits":[{"name": "mock-split-1", "conditions":%v}], "since": 1, "till": 1}`, mockConditions)
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, mockSplits)
 	}))
@@ -252,7 +252,7 @@ func TestGetSplitsDecodesCorrectly(t *testing.T) {
 
 	// Act
 	splits, _, err := result.GetSplits()
-	split := splits[0]
+	split := splits["mock-split-1"]
 	conditions := split.Conditions
 	var segmentName string
 	for _, condition := range conditions {
@@ -391,8 +391,10 @@ func TestGetSegmentsForSplitsReturnsGetSplitError(t *testing.T) {
 	defer testServer.Close()
 	conditions := []dtos.ConditionDTO{}
 	json.Unmarshal([]byte(mockConditions), &conditions)
-	split := dtos.SplitDTO{Conditions: conditions}
-	splits := []dtos.SplitDTO{split}
+  split := dtos.SplitDTO{Name: "mock-split", Conditions: conditions}
+  splits := map[string]dtos.SplitDTO{
+    "mock-split": split,
+  }
 	result := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
 
 	// Act
@@ -400,7 +402,7 @@ func TestGetSegmentsForSplitsReturnsGetSplitError(t *testing.T) {
 
 	// Validate that GetSegmentForSplits function returns error from GetSegment
 	assert.EqualError(t, err, "error when decode data to segment: 1 error(s) decoding:\n\n* 'since' expected type 'int64', got unconvertible type 'string'")
-	assert.Equal(t, segments, []dtos.SegmentChangesDTO{})
+	assert.Equal(t, segments, map[string]dtos.SegmentChangesDTO{})
 	assert.Equal(t, usingSegmentsCount, 0)
 }
 
@@ -411,8 +413,10 @@ func TestGetSegmentsForSplitsReturnsValid(t *testing.T) {
 	defer testServer.Close()
 	conditions := []dtos.ConditionDTO{}
 	json.Unmarshal([]byte(mockConditions), &conditions)
-	split := dtos.SplitDTO{Conditions: conditions}
-	splits := []dtos.SplitDTO{split}
+	split := dtos.SplitDTO{Name: "mock-split", Conditions: conditions}
+  splits := map[string]dtos.SplitDTO{
+    "mock-split": split,
+  }
 	result := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
 
 	// Act
@@ -421,7 +425,7 @@ func TestGetSegmentsForSplitsReturnsValid(t *testing.T) {
 	// Validate that GetSegmentForSplits function returns correct segments
 	assert.Nil(t, err)
 	assert.Equal(t, len(segments), 1)
-	assert.Equal(t, len(segments[0].Added), 4)
-	assert.Equal(t, segments[0].Name, "mock-segment")
+	assert.Equal(t, len(segments["mock-segment"].Added), 4)
+	assert.Equal(t, segments["mock-segment"].Name, "mock-segment")
 	assert.Equal(t, usingSegmentsCount, 1)
 }

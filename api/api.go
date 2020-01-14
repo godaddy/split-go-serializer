@@ -20,8 +20,8 @@ const (
 
 // Splitio interface continas two functions to get Splits and Segments
 type Splitio interface {
-	GetSplits() ([]dtos.SplitDTO, int64, error)
-	GetSegmentsForSplits([]dtos.SplitDTO) ([]dtos.SegmentChangesDTO, int, error)
+	GetSplits() (map[string]dtos.SplitDTO, int64, error)
+	GetSegmentsForSplits(map[string]dtos.SplitDTO) (map[string]dtos.SegmentChangesDTO, int, error)
 }
 
 // SplitioAPIBinding contains splitioAPIKey
@@ -39,10 +39,9 @@ func NewSplitioAPIBinding(apiKey string, apiURL string) *SplitioAPIBinding {
 }
 
 // GetSplits gets the split data
-func (binding *SplitioAPIBinding) GetSplits() ([]dtos.SplitDTO, int64, error) {
+func (binding *SplitioAPIBinding) GetSplits() (map[string]dtos.SplitDTO, int64, error) {
 	path := "splitChanges"
-	splitsMap := map[string]dtos.SplitDTO{}
-	splits := []dtos.SplitDTO{}
+	splits := map[string]dtos.SplitDTO{}
 	allChanges, since, err := binding.getAllChanges(path)
 	if err != nil {
 		return nil, 0, err
@@ -64,23 +63,20 @@ func (binding *SplitioAPIBinding) GetSplits() ([]dtos.SplitDTO, int64, error) {
 
 		for _, split := range splitChanges.Splits {
 			if split.Status == "ARCHIVED" {
-				delete(splitsMap, split.Name)
+				delete(splits, split.Name)
 			} else {
-				splitsMap[split.Name] = split
+				splits[split.Name] = split
 			}
 		}
 	}
 
-	for _, split := range splitsMap {
-		splits = append(splits, split)
-	}
 	return splits, since, nil
 }
 
 // GetSegmentsForSplits return segment info and the count of splits using segment
-func (binding *SplitioAPIBinding) GetSegmentsForSplits(splits []dtos.SplitDTO) ([]dtos.SegmentChangesDTO, int, error) {
+func (binding *SplitioAPIBinding) GetSegmentsForSplits(splits map[string]dtos.SplitDTO) (map[string]dtos.SegmentChangesDTO, int, error) {
 	allSegmentNames := map[string]bool{}
-	segments := []dtos.SegmentChangesDTO{}
+	segments := map[string]dtos.SegmentChangesDTO{}
 	usingSegmentsCount := 0
 
 	for _, split := range splits {
@@ -98,7 +94,7 @@ func (binding *SplitioAPIBinding) GetSegmentsForSplits(splits []dtos.SplitDTO) (
 		if err != nil {
 			return segments, 0, err
 		}
-		segments = append(segments, segment)
+		segments[segment.Name] = segment
 
 	}
 
