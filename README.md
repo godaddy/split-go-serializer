@@ -83,12 +83,10 @@ fmt.Println(serializedDataScript)
 
 //<script>
 //  window.__splitCachePreload = {
-//    Splits: [{"name":"split-1-name","status":"bar"},
-//             {"name":"split-2-name","status":"baz"}]
-//    Since: 1,
-//    Segments: [{"name":"test-segment","added":["foo","bar"],
-//                "removed":null,"since":20,"till":20}],
-//    UsingSegmentsCount: 2
+//    splitsData: {"split-1-name":{"name":"split-1-name","status":"bar"},"split-2-name":{"name":"split-2-name","status":"baz"}},
+//    since: 1,
+//    segmentsData: {"test-segment":{"name":"test-segment","added":["foo","bar"], "removed":null,"since":20,"till":20}}},
+//    usingSegmentsCount: 2
 //  };
 //</script>
 ```

@@ -18,7 +18,7 @@ const (
 	mockPath          = "mockPath"
 	mockSince         = int64(-1)
 	mockConditions    = `
-	[{
+        [{
           "conditionType": "foo",
           "matcherGroup": {
             "matchers": [
@@ -41,7 +41,7 @@ const (
             ]
           }
         }
-	]`
+        ]`
 )
 
 type mockHandler struct {
@@ -53,26 +53,26 @@ func (h *mockHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if path[:6] == "/split" {
 		if since == -1 {
 			fmt.Fprintln(w, `{"splits": [{"name":"mock-split-1", "killed": false},
-										 {"name":"mock-split-2"}],
-							  "since": -1, "till":10}`)
+                                                                                 {"name":"mock-split-2"}],
+                                                          "since": -1, "till":10}`)
 		} else if since == 10 {
 			fmt.Fprintln(w, `{"splits": [{"name":"mock-split-1", "killed": true},
-										 {"name":"mock-split-2", "status":"ARCHIVED"},
-										 {"name":"mock-split-3"}, {"name":"mock-split-4"}],
-							  "since": 10, "till":20}`)
+                                                                                 {"name":"mock-split-2", "status":"ARCHIVED"},
+                                                                                 {"name":"mock-split-3"}, {"name":"mock-split-4"}],
+                                                          "since": 10, "till":20}`)
 		} else if since == 20 {
 			fmt.Fprintln(w, `{"splits": [], "since":20, "till":20}`)
 		}
 	} else if path[:8] == "/segment" {
 		if since == -1 {
 			fmt.Fprintln(w, `{"name": "mock-segment", "added": ["mock1","mock2","mock3","mock4"],
-			                  "removed": [], "since":-1, "till":35}`)
+                                          "removed": [], "since":-1, "till":35}`)
 		} else if since == 35 {
 			fmt.Fprintln(w, `{"name": "mock-segment", "added": ["mock5"], "removed": ["mock2"],
-			                  "since":35, "till":40}`)
+                                          "since":35, "till":40}`)
 		} else if since == 40 {
 			fmt.Fprintln(w, `{"name": "", "added": [], "removed": [],
-			                  "since":40, "till":40}`)
+                                          "since":40, "till":40}`)
 		}
 	}
 }
@@ -243,7 +243,7 @@ func TestGetSplitsValid(t *testing.T) {
 
 func TestGetSplitsDecodesCorrectly(t *testing.T) {
 	// Arrange
-	mockSplits := fmt.Sprintf(`{"splits":[{"conditions":%v}], "since": 1, "till": 1}`, mockConditions)
+	mockSplits := fmt.Sprintf(`{"splits":[{"name": "mock-split-1", "conditions":%v}], "since": 1, "till": 1}`, mockConditions)
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, mockSplits)
 	}))
@@ -252,7 +252,7 @@ func TestGetSplitsDecodesCorrectly(t *testing.T) {
 
 	// Act
 	splits, _, err := result.GetSplits()
-	split := splits[0]
+	split := splits["mock-split-1"]
 	conditions := split.Conditions
 	var segmentName string
 	for _, condition := range conditions {
@@ -391,8 +391,10 @@ func TestGetSegmentsForSplitsReturnsGetSplitError(t *testing.T) {
 	defer testServer.Close()
 	conditions := []dtos.ConditionDTO{}
 	json.Unmarshal([]byte(mockConditions), &conditions)
-	split := dtos.SplitDTO{Conditions: conditions}
-	splits := []dtos.SplitDTO{split}
+	split := dtos.SplitDTO{Name: "mock-split", Conditions: conditions}
+	splits := map[string]dtos.SplitDTO{
+		"mock-split": split,
+	}
 	result := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
 
 	// Act
@@ -400,7 +402,7 @@ func TestGetSegmentsForSplitsReturnsGetSplitError(t *testing.T) {
 
 	// Validate that GetSegmentForSplits function returns error from GetSegment
 	assert.EqualError(t, err, "error when decode data to segment: 1 error(s) decoding:\n\n* 'since' expected type 'int64', got unconvertible type 'string'")
-	assert.Equal(t, segments, []dtos.SegmentChangesDTO{})
+	assert.Equal(t, segments, map[string]dtos.SegmentChangesDTO{})
 	assert.Equal(t, usingSegmentsCount, 0)
 }
 
@@ -411,8 +413,10 @@ func TestGetSegmentsForSplitsReturnsValid(t *testing.T) {
 	defer testServer.Close()
 	conditions := []dtos.ConditionDTO{}
 	json.Unmarshal([]byte(mockConditions), &conditions)
-	split := dtos.SplitDTO{Conditions: conditions}
-	splits := []dtos.SplitDTO{split}
+	split := dtos.SplitDTO{Name: "mock-split", Conditions: conditions}
+	splits := map[string]dtos.SplitDTO{
+		"mock-split": split,
+	}
 	result := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
 
 	// Act
@@ -421,7 +425,7 @@ func TestGetSegmentsForSplitsReturnsValid(t *testing.T) {
 	// Validate that GetSegmentForSplits function returns correct segments
 	assert.Nil(t, err)
 	assert.Equal(t, len(segments), 1)
-	assert.Equal(t, len(segments[0].Added), 4)
-	assert.Equal(t, segments[0].Name, "mock-segment")
+	assert.Equal(t, len(segments["mock-segment"].Added), 4)
+	assert.Equal(t, segments["mock-segment"].Name, "mock-segment")
 	assert.Equal(t, usingSegmentsCount, 1)
 }

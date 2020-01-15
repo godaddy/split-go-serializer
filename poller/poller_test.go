@@ -22,22 +22,28 @@ type mockSplitio struct {
 	getSegmentValid        bool
 }
 
-func (splitio *mockSplitio) GetSplits() ([]dtos.SplitDTO, int64, error) {
+func (splitio *mockSplitio) GetSplits() (map[string]dtos.SplitDTO, int64, error) {
 	if splitio.getSplitValid {
 		mockSplit := dtos.SplitDTO{Name: "mock-split"}
+		mockSplitMap := map[string]dtos.SplitDTO{
+			"mock-split": mockSplit,
+		}
 		splitio.mockSince++
-		return []dtos.SplitDTO{mockSplit}, splitio.mockSince, nil
+		return mockSplitMap, splitio.mockSince, nil
 	}
 	return nil, 0, fmt.Errorf("Error from splitio API when getting splits")
 }
 
-func (splitio *mockSplitio) GetSegmentsForSplits(splits []dtos.SplitDTO) ([]dtos.SegmentChangesDTO, int, error) {
+func (splitio *mockSplitio) GetSegmentsForSplits(splits map[string]dtos.SplitDTO) (map[string]dtos.SegmentChangesDTO, int, error) {
 	if splitio.getSegmentValid {
 		mockSegment := dtos.SegmentChangesDTO{
 			Name: "mock-segment",
 		}
+		mockSegmentMap := map[string]dtos.SegmentChangesDTO{
+			"mock-segment": mockSegment,
+		}
 		splitio.mockUsingSegmentsCount++
-		return []dtos.SegmentChangesDTO{mockSegment}, splitio.mockUsingSegmentsCount, nil
+		return mockSegmentMap, splitio.mockUsingSegmentsCount, nil
 	}
 	return nil, 0, fmt.Errorf("Error from splitio API when getting segments")
 }
@@ -185,8 +191,8 @@ func TestJobsCanRunTwiceAfterStop(t *testing.T) {
 	cacheAfterStart := result.GetSplitData()
 	assert.True(t, cacheAfterStart.Since > 0)
 	assert.True(t, cacheAfterStart.UsingSegmentsCount > 0)
-	assert.Equal(t, cacheAfterStart.Splits[0].Name, "mock-split")
-	assert.Equal(t, cacheAfterStart.Segments[0].Name, "mock-segment")
+	assert.Equal(t, cacheAfterStart.Splits["mock-split"].Name, "mock-split")
+	assert.Equal(t, cacheAfterStart.Segments["mock-segment"].Name, "mock-segment")
 	result.Stop()
 
 	firstSince := result.GetSplitData().Since
@@ -303,7 +309,7 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 	cacheSecondRound := result.GetSplitData()
 	assert.True(t, cacheSecondRound.Since > 0)
 	assert.True(t, cacheSecondRound.UsingSegmentsCount > 0)
-	assert.Equal(t, cacheSecondRound.Splits[0].Name, "mock-split")
-	assert.Equal(t, cacheSecondRound.Segments[0].Name, "mock-segment")
+	assert.Equal(t, cacheSecondRound.Splits["mock-split"].Name, "mock-split")
+	assert.Equal(t, cacheSecondRound.Segments["mock-segment"].Name, "mock-segment")
 	result.Stop()
 }
