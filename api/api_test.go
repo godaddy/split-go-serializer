@@ -18,7 +18,7 @@ const (
 	mockPath          = "mockPath"
 	mockSince         = int64(-1)
 	mockConditions    = `
-	[{
+        [{
           "conditionType": "foo",
           "matcherGroup": {
             "matchers": [
@@ -41,7 +41,7 @@ const (
             ]
           }
         }
-	]`
+        ]`
 )
 
 type mockHandler struct {
@@ -53,26 +53,26 @@ func (h *mockHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if path[:6] == "/split" {
 		if since == -1 {
 			fmt.Fprintln(w, `{"splits": [{"name":"mock-split-1", "killed": false},
-										 {"name":"mock-split-2"}],
-							  "since": -1, "till":10}`)
+                                                                                 {"name":"mock-split-2"}],
+                                                          "since": -1, "till":10}`)
 		} else if since == 10 {
 			fmt.Fprintln(w, `{"splits": [{"name":"mock-split-1", "killed": true},
-										 {"name":"mock-split-2", "status":"ARCHIVED"},
-										 {"name":"mock-split-3"}, {"name":"mock-split-4"}],
-							  "since": 10, "till":20}`)
+                                                                                 {"name":"mock-split-2", "status":"ARCHIVED"},
+                                                                                 {"name":"mock-split-3"}, {"name":"mock-split-4"}],
+                                                          "since": 10, "till":20}`)
 		} else if since == 20 {
 			fmt.Fprintln(w, `{"splits": [], "since":20, "till":20}`)
 		}
 	} else if path[:8] == "/segment" {
 		if since == -1 {
 			fmt.Fprintln(w, `{"name": "mock-segment", "added": ["mock1","mock2","mock3","mock4"],
-			                  "removed": [], "since":-1, "till":35}`)
+                                          "removed": [], "since":-1, "till":35}`)
 		} else if since == 35 {
 			fmt.Fprintln(w, `{"name": "mock-segment", "added": ["mock5"], "removed": ["mock2"],
-			                  "since":35, "till":40}`)
+                                          "since":35, "till":40}`)
 		} else if since == 40 {
 			fmt.Fprintln(w, `{"name": "", "added": [], "removed": [],
-			                  "since":40, "till":40}`)
+                                          "since":40, "till":40}`)
 		}
 	}
 }
@@ -391,10 +391,10 @@ func TestGetSegmentsForSplitsReturnsGetSplitError(t *testing.T) {
 	defer testServer.Close()
 	conditions := []dtos.ConditionDTO{}
 	json.Unmarshal([]byte(mockConditions), &conditions)
-        split := dtos.SplitDTO{Name: "mock-split", Conditions: conditions}
-        splits := map[string]dtos.SplitDTO{
-                "mock-split": split,
-        }
+	split := dtos.SplitDTO{Name: "mock-split", Conditions: conditions}
+	splits := map[string]dtos.SplitDTO{
+		"mock-split": split,
+	}
 	result := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
 
 	// Act
@@ -413,10 +413,10 @@ func TestGetSegmentsForSplitsReturnsValid(t *testing.T) {
 	defer testServer.Close()
 	conditions := []dtos.ConditionDTO{}
 	json.Unmarshal([]byte(mockConditions), &conditions)
-        split := dtos.SplitDTO{Name: "mock-split", Conditions: conditions}
-        splits := map[string]dtos.SplitDTO{
-                "mock-split": split,
-        }
+	split := dtos.SplitDTO{Name: "mock-split", Conditions: conditions}
+	splits := map[string]dtos.SplitDTO{
+		"mock-split": split,
+	}
 	result := NewSplitioAPIBinding(mockSplitioAPIKey, testServer.URL)
 
 	// Act

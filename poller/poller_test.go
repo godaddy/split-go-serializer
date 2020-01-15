@@ -24,11 +24,11 @@ type mockSplitio struct {
 
 func (splitio *mockSplitio) GetSplits() (map[string]dtos.SplitDTO, int64, error) {
 	if splitio.getSplitValid {
-                mockSplit := dtos.SplitDTO{Name: "mock-split"}
-                mockSplitMap := map[string]dtos.SplitDTO{
-                        "mock-split": mockSplit,
-                }
-	        splitio.mockSince++
+		mockSplit := dtos.SplitDTO{Name: "mock-split"}
+		mockSplitMap := map[string]dtos.SplitDTO{
+			"mock-split": mockSplit,
+		}
+		splitio.mockSince++
 		return mockSplitMap, splitio.mockSince, nil
 	}
 	return nil, 0, fmt.Errorf("Error from splitio API when getting splits")
@@ -39,9 +39,9 @@ func (splitio *mockSplitio) GetSegmentsForSplits(splits map[string]dtos.SplitDTO
 		mockSegment := dtos.SegmentChangesDTO{
 			Name: "mock-segment",
 		}
-                mockSegmentMap := map[string]dtos.SegmentChangesDTO{
-                        "mock-segment": mockSegment,
-                }
+		mockSegmentMap := map[string]dtos.SegmentChangesDTO{
+			"mock-segment": mockSegment,
+		}
 		splitio.mockUsingSegmentsCount++
 		return mockSegmentMap, splitio.mockUsingSegmentsCount, nil
 	}

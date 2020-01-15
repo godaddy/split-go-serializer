@@ -29,20 +29,20 @@ func NewSerializer(poller poller.Fetcher) *Serializer {
 
 // GetSerializedData serializes split and segment data into strings
 func (serializer *Serializer) GetSerializedData() (string, error) {
-        latestData := serializer.poller.GetSplitData()
+	latestData := serializer.poller.GetSplitData()
 
-        marshalledSplits, err := json.Marshal(latestData.Splits)
-        if err != nil {
-                return "", err
-        }
-        stringifiedSplits := string(marshalledSplits)
+	marshalledSplits, err := json.Marshal(latestData.Splits)
+	if err != nil {
+		return "", err
+	}
+	stringifiedSplits := string(marshalledSplits)
 
-        marshalledSegments, err := json.Marshal(latestData.Segments)
-        if err != nil {
-                return "", err
-        }
-        stringifiedSegments := string(marshalledSegments)
+	marshalledSegments, err := json.Marshal(latestData.Segments)
+	if err != nil {
+		return "", err
+	}
+	stringifiedSegments := string(marshalledSegments)
 
-        return fmt.Sprintf(formattedLoggingScript, stringifiedSplits, latestData.Since,
-                stringifiedSegments, latestData.UsingSegmentsCount), nil
+	return fmt.Sprintf(formattedLoggingScript, stringifiedSplits, latestData.Since,
+		stringifiedSegments, latestData.UsingSegmentsCount), nil
 }
