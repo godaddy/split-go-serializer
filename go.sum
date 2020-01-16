@@ -3,8 +3,6 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/go-resty/resty v1.12.0 h1:L1P5qymrXL5H/doXe2pKUr1wxovAI5ilm2LdVLbwThc=
 github.com/go-resty/resty/v2 v2.1.0 h1:Z6IefCpUMfnvItVJaJXWv/pMiiD11So35QgwEELsldE=
 github.com/go-resty/resty/v2 v2.1.0/go.mod h1:dZGr0i9PLlaaTD4H/hoZIDjQ+r6xq8mgbRzHZf7f2J8=
-github.com/godaddy/split-go-serializer v1.0.2 h1:EjMwC8LeoD5LX5x+sa/5FuSFjIB5rLmZivaZj4HYK+Y=
-github.com/godaddy/split-go-serializer v1.0.2/go.mod h1:WGoLjU38xcezAsWsLXepOuClRKK39VXkor440KIuszs=
 github.com/mitchellh/mapstructure v1.1.2 h1:fmNYVwqnSfB9mZU6OS2O6GsXM+wcskZDuKQzvN1EDeE=
 github.com/mitchellh/mapstructure v1.1.2/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
