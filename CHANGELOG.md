@@ -2,8 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.0.0"></a>
+## [v2.0.0](github.com/godaddy/split-go-serializer/compare/v1.0.2...v2.0.0) (2020-01-16)
+
+### Refactor
+
+* **api:** change splits and segments to maps with keys that match data loader expectations ([#12](github.com/godaddy/split-go-serializer/issues/12))
+* **serializer:** handle empty cache and stringify each split and segment ([#13](github.com/godaddy/split-go-serializer/issues/13))
+
+### BREAKING CHANGE
+
+
+adds an empty object to the script tag when the cache is empty and returns individual split and segment values as strings
+
+
 <a name="v1.0.2"></a>
 ## [v1.0.2](github.com/godaddy/split-go-serializer/compare/v1.0.1...v1.0.2) (2020-01-02)
+
+### Chore
+
+* **release:** 1.0.2
 
 ### Refactor
 
