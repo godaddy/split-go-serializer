@@ -34,9 +34,8 @@ func NewSerializer(poller poller.Fetcher) *Serializer {
 func (serializer *Serializer) GetSerializedData() (string, error) {
 	latestData := serializer.poller.GetSplitData()
 	if reflect.DeepEqual(latestData, poller.SplitData{}) {
-		return fmt.Sprintf(emptyCacheLoggingScript), nil
+		return emptyCacheLoggingScript, nil
 	}
-
 	splitsData := map[string]string{}
 
 	// Serialize values for splits
