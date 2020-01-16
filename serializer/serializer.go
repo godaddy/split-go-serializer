@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/godaddy/split-go-serializer/poller"
+	"github.com/godaddy/split-go-serializer/v2/poller"
 )
 
 const emptyCacheLoggingScript = `<script>window.__splitCachePreload = {}</script>`
