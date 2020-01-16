@@ -8,7 +8,17 @@ import (
 	"github.com/godaddy/split-go-serializer/poller"
 )
 
-const formattedLoggingScript = `<script>window.__splitCachePreload = %s</script>`
+const emptyCacheLoggingScript = `<script>window.__splitCachePreload = {}</script>`
+
+const formattedLoggingScript = `<script>window.__splitCachePreload = { splitsData: %v, since: %v, segmentsData: %v, usingSegmentsCount: %v }</script>`
+
+// SplitCachePreload does something
+type SplitCachePreload struct {
+	Since              int64
+	UsingSegmentsCount int
+	SplitsData         string
+	SegmentsData       string
+}
 
 // Serializer contains poller
 type Serializer struct {
@@ -24,33 +34,36 @@ func NewSerializer(poller poller.Fetcher) *Serializer {
 func (serializer *Serializer) GetSerializedData() (string, error) {
 	latestData := serializer.poller.GetSplitData()
 	if reflect.DeepEqual(latestData, poller.SplitData{}) {
-		return fmt.Sprintf(formattedLoggingScript, "{}"), nil
+		return fmt.Sprintf(emptyCacheLoggingScript), nil
 	}
 
-	splitCachePreload := map[string]interface{}{"since": latestData.Since, "usingSegmentsCount": latestData.UsingSegmentsCount, "splitsData": map[string]string{}, "segmentsData": map[string]string{}}
+	splitsData := map[string]string{}
 
 	// Serialize values for splits
 	for _, split := range latestData.Splits {
-		marshalledSplit, err := json.Marshal(split)
-		if err != nil {
-			return "", err
-		}
-		splitCachePreload["splitsData"].(map[string]string)[split.Name] = string(marshalledSplit)
+		marshalledSplit, _ := json.Marshal(split)
+		splitsData[split.Name] = string(marshalledSplit)
 	}
 
-	// Serialize values for segments
-	for _, segment := range latestData.Segments {
-		marshalledSegment, err := json.Marshal(segment)
-		if err != nil {
-			return "", err
-		}
-		splitCachePreload["segmentsData"].(map[string]string)[segment.Name] = string(marshalledSegment)
-	}
-
-	marshalledSplitCachePreload, err := json.Marshal(splitCachePreload)
+	marshalledSplits, err := json.Marshal(splitsData)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf(formattedLoggingScript, string(marshalledSplitCachePreload)), nil
+	segmentsData := map[string]string{}
+
+	// Serialize values for segments
+	for _, segment := range latestData.Segments {
+		marshalledSegment, _ := json.Marshal(segment)
+		segmentsData[segment.Name] = string(marshalledSegment)
+	}
+
+	marshalledSegments, err := json.Marshal(segmentsData)
+	if err != nil {
+		return "", err
+	}
+
+	splitCachePreload := &SplitCachePreload{latestData.Since, latestData.UsingSegmentsCount, string(marshalledSplits), string(marshalledSegments)}
+
+	return fmt.Sprintf(formattedLoggingScript, splitCachePreload.SplitsData, splitCachePreload.Since, splitCachePreload.SegmentsData, splitCachePreload.UsingSegmentsCount), nil
 }

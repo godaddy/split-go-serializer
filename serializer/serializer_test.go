@@ -74,8 +74,9 @@ func TestGetSerializedDataValid(t *testing.T) {
 	result, err := serializer.GetSerializedData()
 
 	// Validate that returned logging script contains a valid SplitData
-	expectedData := "{\"splitsData\":{\"mock-split-1\":\"{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-1\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-1\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}\"},\"since\":1,\"segmentsData\":{\"mock-segment-1\":\"{\"name\":\"mock-segment-1\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}\"},\"usingSegmentsCount\":2}"
-	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, expectedData)
+	stringSplits := `{"mock-split-1":"{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-1\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-1\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}"}`
+	stringSegments := `{"mock-segment-1":"{\"name\":\"mock-segment-1\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}"}`
+	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, stringSplits, 1, stringSegments, 2)
 	assert.Equal(t, result, expectedLoggingScript)
 	assert.Nil(t, err)
 }
@@ -88,8 +89,7 @@ func TestGetSerializedDataMarshalEmptyCache(t *testing.T) {
 	result, err := serializer.GetSerializedData()
 
 	// Validate that returned logging script contains a valid SplitData
-	expectedData := "{}"
-	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, expectedData)
+	expectedLoggingScript := fmt.Sprintf(emptyCacheLoggingScript)
 	assert.Equal(t, result, expectedLoggingScript)
 	assert.Nil(t, err)
 }
