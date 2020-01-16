@@ -6,4 +6,5 @@ script:
   - go get ./...
   - go get golang.org/x/lint/golint
   - ./scripts/test.sh
+  - ./v2/scripts/test.sh
 install: true
