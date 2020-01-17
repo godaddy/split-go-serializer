@@ -1,4 +1,4 @@
-module github.com/godaddy/split-go-serializer
+module github.com/godaddy/split-go-serializer/v2
 
 go 1.13
 

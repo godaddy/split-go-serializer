@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/godaddy/split-go-serializer/poller"
+	"github.com/godaddy/split-go-serializer/v2/poller"
 	"github.com/splitio/go-client/splitio/service/dtos"
 	"github.com/stretchr/testify/assert"
 )
