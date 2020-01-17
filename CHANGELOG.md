@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 <a name="v2.0.0"></a>
 ## [v2.0.0](github.com/godaddy/split-go-serializer/compare/v1.0.2...v2.0.0) (2020-01-16)
 
+### Chore
+
+* **mod:** update to v2 ([#15](github.com/godaddy/split-go-serializer/issues/15))
+* **release:** 2.0.0
+
 ### Refactor
 
 * **api:** change splits and segments to maps with keys that match data loader expectations ([#12](github.com/godaddy/split-go-serializer/issues/12))
