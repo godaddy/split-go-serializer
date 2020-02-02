@@ -1,3 +1,5 @@
+[![Join Slack](https://img.shields.io/badge/Join%20us%20on-Slack-e01563.svg)](https://godaddy-oss-slack.herokuapp.com/)
+
 # split-go-serializer
 
 A Go module which fetches split definitions and segments from Split.io and serializes them into a set of strings that the GO SDK can consume.
