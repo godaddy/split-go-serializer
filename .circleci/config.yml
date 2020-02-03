@@ -16,4 +16,3 @@ jobs:
       - run: go get ./...
       - run: go get golang.org/x/lint/golint
       - run: ./scripts/test.sh
-      - run: sh ./scripts/coverage-check.sh cover.out
