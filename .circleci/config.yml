@@ -15,6 +15,5 @@ jobs:
       # specify any bash command here prefixed with `run: `
       - run: go get ./...
       - run: go get golang.org/x/lint/golint
-      - run:
-          name: Run golint and unit tests
-          command: ./scripts/test.sh
+      - run: ./scripts/test.sh
+      - run: ./scripts/coverage-check.sh cover.out
