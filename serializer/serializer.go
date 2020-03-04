@@ -14,7 +14,7 @@ func NewSerializer(poller poller.Fetcher) *Serializer {
 	return &Serializer{poller}
 }
 
-// GetSerializedData serializes split and segment data into strings
+// GetSerializedData retrieves serialized data from the cache
 func (serializer *Serializer) GetSerializedData() (string, error) {
 	serializedData := serializer.poller.GetSerializedData()
 	return serializedData, nil

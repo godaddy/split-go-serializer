@@ -34,6 +34,12 @@ type Poller struct {
 	cache              unsafe.Pointer
 }
 
+// Cache contains raw split data as well as the data in serialized format
+type Cache struct {
+	SplitData
+	SerializedData string
+}
+
 // SplitData contains Splits and Segments which is supposed to be updated periodically
 type SplitData struct {
 	Splits             map[string]dtos.SplitDTO
@@ -42,13 +48,7 @@ type SplitData struct {
 	UsingSegmentsCount int
 }
 
-// Cache contains raw split data as well as the data in serialized format
-type Cache struct {
-	SplitData
-	SerializedData string
-}
-
-// SplitCachePreload contains the split/segment data from split.io
+// SplitCachePreload contains the same information as SplitData but in string format
 type SplitCachePreload struct {
 	Since              int64
 	UsingSegmentsCount int
@@ -145,6 +145,8 @@ func (poller *Poller) jobs() {
 	}
 }
 
+// generateSerializedData takes SplitData and converts generates a script tag
+// that saves the SplitData info do the window object of the browser
 func generateSerializedData(splitData SplitData) (string, error) {
 	if reflect.DeepEqual(splitData, SplitData{}) {
 		return emptyCacheLoggingScript, nil
