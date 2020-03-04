@@ -48,7 +48,7 @@ type Cache struct {
 	SerializedData string
 }
 
-// SplitCachePreload does something
+// SplitCachePreload contains the split/segment data from split.io
 type SplitCachePreload struct {
 	Since              int64
 	UsingSegmentsCount int
@@ -115,7 +115,7 @@ func (poller *Poller) GetSplitData() SplitData {
 	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).SplitData
 }
 
-// GetSerializedData returns split data cache results
+// GetSerializedData returns serialized data cache results
 func (poller *Poller) GetSerializedData() string {
 	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).SerializedData
 }
