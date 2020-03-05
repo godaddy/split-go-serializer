@@ -2,7 +2,7 @@
 
 set -e
 
-THRESHOLD='96.0'
+THRESHOLD='97.3s'
 
 COVERAGE=$(go tool cover -func $1 | grep 'total:' | awk '{ print(substr($3, 1, length($3)-1)) }')
 PASSED=$(echo "${COVERAGE}>=${THRESHOLD}" | bc -l)

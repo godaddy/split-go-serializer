@@ -97,11 +97,8 @@ func (poller *Poller) pollForChanges() {
 		Segments:           segments,
 		UsingSegmentsCount: usingSegmentsCount,
 	}
-	serializedData, err := generateSerializedData(splitData)
-	if err != nil {
-		poller.Error <- err
-		return
-	}
+	serializedData := generateSerializedData(splitData)
+
 	updatedCache := Cache{
 		SplitData:      splitData,
 		SerializedData: serializedData,
@@ -147,9 +144,9 @@ func (poller *Poller) jobs() {
 
 // generateSerializedData takes SplitData and converts generates a script tag
 // that saves the SplitData info do the window object of the browser
-func generateSerializedData(splitData SplitData) (string, error) {
+func generateSerializedData(splitData SplitData) string {
 	if reflect.DeepEqual(splitData, SplitData{}) {
-		return emptyCacheLoggingScript, nil
+		return emptyCacheLoggingScript
 	}
 	splitsData := map[string]string{}
 
@@ -159,10 +156,7 @@ func generateSerializedData(splitData SplitData) (string, error) {
 		splitsData[split.Name] = string(marshalledSplit)
 	}
 
-	marshalledSplits, err := json.Marshal(splitsData)
-	if err != nil {
-		return "", err
-	}
+	marshalledSplits, _ := json.Marshal(splitsData)
 
 	segmentsData := map[string]string{}
 
@@ -172,12 +166,9 @@ func generateSerializedData(splitData SplitData) (string, error) {
 		segmentsData[segment.Name] = string(marshalledSegment)
 	}
 
-	marshalledSegments, err := json.Marshal(segmentsData)
-	if err != nil {
-		return "", err
-	}
+	marshalledSegments, _ := json.Marshal(segmentsData)
 
 	splitCachePreload := &SplitCachePreload{splitData.Since, splitData.UsingSegmentsCount, string(marshalledSplits), string(marshalledSegments)}
 
-	return fmt.Sprintf(formattedLoggingScript, splitCachePreload.SplitsData, splitCachePreload.Since, splitCachePreload.SegmentsData, splitCachePreload.UsingSegmentsCount), nil
+	return fmt.Sprintf(formattedLoggingScript, splitCachePreload.SplitsData, splitCachePreload.Since, splitCachePreload.SegmentsData, splitCachePreload.UsingSegmentsCount)
 }
