@@ -143,7 +143,7 @@ func (poller *Poller) jobs() {
 }
 
 // generateSerializedData takes SplitData and generates a script tag
-// that saves the SplitData info do the window object of the browser
+// that saves the SplitData info to the window object of the browser
 func generateSerializedData(splitData SplitData) string {
 	if reflect.DeepEqual(splitData, SplitData{}) {
 		return emptyCacheLoggingScript
