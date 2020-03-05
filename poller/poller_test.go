@@ -181,18 +181,23 @@ func TestJobsCanRunTwiceAfterStop(t *testing.T) {
 
 	// First loop
 	cacheBeforeStart := result.GetSplitData()
+	serializedCacheBeforeStart := result.GetSerializedData()
 	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
+	assert.Equal(t, serializedCacheBeforeStart, emptyCacheLoggingScript)
 	go result.jobs()
 	time.Sleep(3 * time.Second)
 
 	// assert loop calls function so cache is updated
 	cacheAfterStart := result.GetSplitData()
+	serializedCacheAfterStart := result.GetSerializedData()
 	assert.True(t, cacheAfterStart.Since > 0)
 	assert.True(t, cacheAfterStart.UsingSegmentsCount > 0)
 	assert.Equal(t, cacheAfterStart.Splits["mock-split"].Name, "mock-split")
 	assert.Equal(t, cacheAfterStart.Segments["mock-segment"].Name, "mock-segment")
+	expectedSerializedScript := generateSerializedData(cacheAfterStart)
+	assert.Equal(t, serializedCacheAfterStart, expectedSerializedScript)
 	result.Stop()
 
 	firstSince := result.GetSplitData().Since
@@ -287,18 +292,22 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 
 	// first loop
 	cacheBeforeStart := result.GetSplitData()
+	serializedCacheBeforeStart := result.GetSerializedData()
 	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
+	assert.Equal(t, serializedCacheBeforeStart, emptyCacheLoggingScript)
 	go result.jobs()
 	err = <-result.Error
 	if err != nil {
 		hasErr = true
 	}
 	cacheAfterError := result.GetSplitData()
+	serializedCacheAfterError := result.GetSerializedData()
 	assert.Equal(t, cacheAfterError, SplitData{})
 	assert.Equal(t, cacheAfterError.Since, int64(0))
 	assert.Equal(t, cacheAfterError.UsingSegmentsCount, 0)
+	assert.Equal(t, serializedCacheAfterError, emptyCacheLoggingScript)
 	assert.True(t, hasErr)
 	assert.EqualError(t, err, "Error from splitio API when getting splits")
 
@@ -307,9 +316,62 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 	mockSplitioDataGetter.getSegmentValid = true
 	time.Sleep(5 * time.Second)
 	cacheSecondRound := result.GetSplitData()
+	serializedCacheSecondRound := result.GetSerializedData()
 	assert.True(t, cacheSecondRound.Since > 0)
 	assert.True(t, cacheSecondRound.UsingSegmentsCount > 0)
 	assert.Equal(t, cacheSecondRound.Splits["mock-split"].Name, "mock-split")
 	assert.Equal(t, cacheSecondRound.Segments["mock-segment"].Name, "mock-segment")
+	expectedSerializedScript := generateSerializedData(cacheSecondRound)
+	assert.Equal(t, serializedCacheSecondRound, expectedSerializedScript)
 	result.Stop()
+}
+
+func TestGenerateSerializedDataValid(t *testing.T) {
+	// Arrange
+	mockSplits := map[string]dtos.SplitDTO{
+		"mock-split-1": {
+			Name:   "mock-split-1",
+			Status: "mock-status-1",
+		},
+	}
+	mockSegments := map[string]dtos.SegmentChangesDTO{
+		"mock-segment-1": {
+			Name:  "mock-segment-1",
+			Added: []string{"foo", "bar"},
+			Since: 20,
+			Till:  20,
+		},
+	}
+	mockSplitData := SplitData{
+		Splits:             mockSplits,
+		Since:              1,
+		Segments:           mockSegments,
+		UsingSegmentsCount: 2,
+	}
+	// Act
+	result := generateSerializedData(mockSplitData)
+
+	// Validate that returned logging script contains a valid SplitData
+	stringSplits := `{"mock-split-1":"{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-1\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-1\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}"}`
+	stringSegments := `{"mock-segment-1":"{\"name\":\"mock-segment-1\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}"}`
+	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, stringSplits, 1, stringSegments, 2)
+	assert.Equal(t, result, expectedLoggingScript)
+}
+
+func TestGenerateSerializedDataMarshalEmptyCache(t *testing.T) {
+	// Act
+	result := generateSerializedData(SplitData{})
+
+	// Validate that returned logging script contains a valid SplitData
+	expectedLoggingScript := fmt.Sprintf(emptyCacheLoggingScript)
+	assert.Equal(t, result, expectedLoggingScript)
+}
+
+func TestGenerateSerializedDataSplitError(t *testing.T) {
+	// Act
+	result := generateSerializedData(SplitData{})
+
+	// Validate that returned logging script contains a valid SplitData
+	expectedLoggingScript := fmt.Sprintf(emptyCacheLoggingScript)
+	assert.Equal(t, result, expectedLoggingScript)
 }

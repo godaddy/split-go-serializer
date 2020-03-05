@@ -1,7 +1,6 @@
 package serializer
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/godaddy/split-go-serializer/v2/poller"
@@ -22,6 +21,10 @@ func (fetcher *mockFetcher) Start() {
 }
 
 func (fetcher *mockFetcher) Stop() {
+}
+
+func (fetcher *mockFetcher) GetSerializedData() string {
+	return "foo"
 }
 
 func (fetcher *mockFetcher) GetSplitData() poller.SplitData {
@@ -73,23 +76,8 @@ func TestGetSerializedDataValid(t *testing.T) {
 	// Act
 	result, err := serializer.GetSerializedData()
 
-	// Validate that returned logging script contains a valid SplitData
-	stringSplits := `{"mock-split-1":"{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-1\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-1\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}"}`
-	stringSegments := `{"mock-segment-1":"{\"name\":\"mock-segment-1\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}"}`
-	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, stringSplits, 1, stringSegments, 2)
-	assert.Equal(t, result, expectedLoggingScript)
-	assert.Nil(t, err)
-}
-
-func TestGetSerializedDataMarshalEmptyCache(t *testing.T) {
-	// Arrange
-	serializer := NewSerializer(&mockFetcher{hasData: false})
-
-	// Act
-	result, err := serializer.GetSerializedData()
-
-	// Validate that returned logging script contains a valid SplitData
-	expectedLoggingScript := fmt.Sprintf(emptyCacheLoggingScript)
+	// Validate that returned logging script contains the string from poller cache
+	expectedLoggingScript := "foo"
 	assert.Equal(t, result, expectedLoggingScript)
 	assert.Nil(t, err)
 }
