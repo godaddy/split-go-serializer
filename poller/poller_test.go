@@ -355,7 +355,7 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 	result.Stop()
 }
 
-func TestGetSerializedDataSubsetValid(t *testing.T) {
+func TestGetSerializedDataWithSplitsPassedIn(t *testing.T) {
 	// Arrange
 	splits := []string{"mock-split-2"}
 	pollingRateSeconds := 1
@@ -366,7 +366,7 @@ func TestGetSerializedDataSubsetValid(t *testing.T) {
 
 	// Validate that GetSerializedData returns serialized data subset properly
 
-	// before start, serialized subsets should be empty and subset should be an empty logging script
+	// before start, cached serialized subsets should be empty and the serialized data returned should be an empty logging script
 	serializedCachedDataSubsetsBeforeStart := getCachedSerializedDataSubsets(result)
 	assert.Equal(t, serializedCachedDataSubsetsBeforeStart, make(map[string]string))
 	subsetBeforeStart := result.GetSerializedData(splits)
@@ -375,7 +375,7 @@ func TestGetSerializedDataSubsetValid(t *testing.T) {
 	result.Start()
 	time.Sleep(1 * time.Second)
 
-	// after starting, serialized subsets should contain a valid logging script for our subset
+	// after starting, cached serialized subsets should contain a valid logging script
 	serializedCachedDataSubsetsAfterStart := getCachedSerializedDataSubsets(result)
 	expectedSerializedScript := generateSerializedData(getSplitData(result), splits)
 	assert.Equal(t, serializedCachedDataSubsetsAfterStart, map[string]string{
@@ -411,7 +411,7 @@ func TestGetUpdatedSerializedDataSubsetsValid(t *testing.T) {
 	// Act
 	result := poller.getUpdatedSerializedDataSubsets(mockSplitData)
 
-	// Validate that serializedDataSubsets is updated with correct logging scripts
+	// Validate that and updated serializedDataSubsets, with correct logging scripts, is returned
 	stringSplit := `"mock-split-%v":"{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-%v\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-%v\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}"`
 	mockSplitOneString := fmt.Sprintf(stringSplit, 1, 1, 1)
 	mockSplitTwoString := fmt.Sprintf(stringSplit, 2, 2, 2)
@@ -450,7 +450,7 @@ func TestGenerateSerializedDataValid(t *testing.T) {
 	assert.Equal(t, result, expectedLoggingScript)
 }
 
-func TestGenerateSerializedDataWithSplits(t *testing.T) {
+func TestGenerateSerializedDataWithNonEmptySplits(t *testing.T) {
 	// Arrange
 	splits := []string{"mock-split-2"}
 	mockSplitData := SplitData{
