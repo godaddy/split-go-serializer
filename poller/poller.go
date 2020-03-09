@@ -16,11 +16,10 @@ const emptyCacheLoggingScript = `<script>window.__splitCachePreload = {}</script
 
 const formattedLoggingScript = `<script>window.__splitCachePreload = { splitsData: %v, since: %v, segmentsData: %v, usingSegmentsCount: %v }</script>`
 
-// Fetcher is an interface contains GetSplitData, Start and Stop functions
+// Fetcher is an interface contains GetSerializedData, Start and Stop functions
 type Fetcher interface {
 	Start()
 	Stop()
-	GetSplitData() SplitData
 	GetSerializedData() string
 }
 
@@ -105,11 +104,6 @@ func (poller *Poller) pollForChanges() {
 	}
 	atomic.StorePointer(&poller.cache, unsafe.Pointer(&updatedCache))
 
-}
-
-// GetSplitData returns split data cache results
-func (poller *Poller) GetSplitData() SplitData {
-	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).SplitData
 }
 
 // GetSerializedData returns serialized data cache results
