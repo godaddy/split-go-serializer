@@ -110,6 +110,7 @@ func (poller *Poller) pollForChanges() {
 		serializedDataSubsets: poller.getUpdatedSerializedDataSubsets(splitData),
 	}
 	atomic.StorePointer(&poller.cache, unsafe.Pointer(&updatedCache))
+
 }
 
 // GetSplitData returns split data cache results
@@ -181,7 +182,7 @@ func (poller *Poller) getUpdatedSerializedDataSubsets(newSplitData SplitData) ma
 	return updatedSubsets
 }
 
-// GetCachedSerializedDataSubsets returns splits data subsets that are cached
+// getCachedSerializedDataSubsets returns splits data subsets that are cached
 func (poller *Poller) getCachedSerializedDataSubsets() map[string]string {
 	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).serializedDataSubsets
 }

@@ -127,7 +127,7 @@ func TestGetSerializedDataSubsetValid(t *testing.T) {
 
 	// Validate that GetSerializedDataSubset returns serialized data subset properly
 
-	// before start, serialized subsets should not exist and subset should be an empty logging script
+	// before start, serialized subsets should be empty and subset should be an empty logging script
 	serializedCachedDataSubsetsBeforeStart := result.getCachedSerializedDataSubsets()
 	assert.Equal(t, serializedCachedDataSubsetsBeforeStart, make(map[string]string))
 	subsetBeforeStart := result.GetSerializedDataSubset(splits)
