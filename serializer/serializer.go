@@ -15,7 +15,12 @@ func NewSerializer(poller poller.Fetcher) *Serializer {
 }
 
 // GetSerializedData retrieves serialized data from the cache
-func (serializer *Serializer) GetSerializedData() (string, error) {
-	serializedData := serializer.poller.GetSerializedData()
+func (serializer *Serializer) GetSerializedData(splits []string) (string, error) {
+	serializedData := ""
+	if len(splits) > 0 {
+		serializedData = serializer.poller.GetSerializedDataSubset(splits)
+	} else {
+		serializedData = serializer.poller.GetSerializedData()
+	}
 	return serializedData, nil
 }

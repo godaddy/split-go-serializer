@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sort"
+	"strings"
 	"sync/atomic"
 	"time"
 	"unsafe"
@@ -22,6 +24,7 @@ type Fetcher interface {
 	Stop()
 	GetSplitData() SplitData
 	GetSerializedData() string
+	GetSerializedDataSubset([]string) string
 }
 
 // Poller implements Fetcher and contains cache pointer, splitio, and required info to interact with aplitio api
@@ -37,7 +40,8 @@ type Poller struct {
 // Cache contains raw split data as well as the data in serialized format
 type Cache struct {
 	SplitData
-	SerializedData string
+	SerializedData        string
+	serializedDataSubsets map[string]string
 }
 
 // SplitData contains Splits and Segments which is supposed to be updated periodically
@@ -65,8 +69,9 @@ func NewPoller(splitioAPIKey string, pollingRateSeconds int, serializeSegments b
 		splitio = api.NewSplitioAPIBinding(splitioAPIKey, "")
 	}
 	emptyCache := Cache{
-		SplitData:      SplitData{},
-		SerializedData: emptyCacheLoggingScript,
+		SplitData:             SplitData{},
+		SerializedData:        emptyCacheLoggingScript,
+		serializedDataSubsets: make(map[string]string),
 	}
 	return &Poller{make(chan error), splitio, pollingRateSeconds, serializeSegments, make(chan bool), unsafe.Pointer(&emptyCache)}
 }
@@ -97,14 +102,39 @@ func (poller *Poller) pollForChanges() {
 		Segments:           segments,
 		UsingSegmentsCount: usingSegmentsCount,
 	}
-	serializedData := generateSerializedData(splitData)
+	serializedData := generateSerializedData(splitData, []string{})
 
 	updatedCache := Cache{
-		SplitData:      splitData,
-		SerializedData: serializedData,
+		SplitData:             splitData,
+		SerializedData:        serializedData,
+		serializedDataSubsets: poller.getUpdatedSerializedDataSubsets(splitData),
+	}
+	atomic.StorePointer(&poller.cache, unsafe.Pointer(&updatedCache))
+}
+
+// GetSerializedDataSubset returns serialized data cache results for the subset of splits
+func (poller *Poller) GetSerializedDataSubset(splits []string) string {
+	currentSplitData := poller.GetSplitData()
+	updatedSubsets := poller.GetCachedSerializedDataSubsets()
+	sort.Strings(splits)
+	key := strings.Join(splits, ".")
+
+	subset, inMap := updatedSubsets[key]
+	if inMap {
+		return subset
+	}
+	subset = generateSerializedData(currentSplitData, splits)
+	updatedSubsets[key] = subset
+
+	// update cache
+	updatedCache := Cache{
+		SplitData:             currentSplitData,
+		SerializedData:        poller.GetSerializedData(),
+		serializedDataSubsets: updatedSubsets,
 	}
 	atomic.StorePointer(&poller.cache, unsafe.Pointer(&updatedCache))
 
+	return subset
 }
 
 // GetSplitData returns split data cache results
@@ -115,6 +145,11 @@ func (poller *Poller) GetSplitData() SplitData {
 // GetSerializedData returns serialized data cache results
 func (poller *Poller) GetSerializedData() string {
 	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).SerializedData
+}
+
+// GetCachedSerializedDataSubsets returns splits data subsets that are cached
+func (poller *Poller) GetCachedSerializedDataSubsets() map[string]string {
+	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).serializedDataSubsets
 }
 
 // Start creates a goroutine and keep tracking until it stops
@@ -142,9 +177,18 @@ func (poller *Poller) jobs() {
 	}
 }
 
+// getUpdatedSerializedDataSubsets updates cached serializedDataSubsets based on new splits data
+func (poller *Poller) getUpdatedSerializedDataSubsets(newSplitData SplitData) map[string]string {
+	updatedSubsets := poller.GetCachedSerializedDataSubsets()
+	for key := range updatedSubsets {
+		updatedSubsets[key] = generateSerializedData(newSplitData, strings.Split(key, "."))
+	}
+	return updatedSubsets
+}
+
 // generateSerializedData takes SplitData and generates a script tag
 // that saves the SplitData info to the window object of the browser
-func generateSerializedData(splitData SplitData) string {
+func generateSerializedData(splitData SplitData, splits []string) string {
 	if reflect.DeepEqual(splitData, SplitData{}) {
 		return emptyCacheLoggingScript
 	}
@@ -152,6 +196,12 @@ func generateSerializedData(splitData SplitData) string {
 
 	// Serialize values for splits
 	for _, split := range splitData.Splits {
+		splitIndex := sort.SearchStrings(splits, split.Name)
+		splitInSplits := splitIndex < len(splits) && splits[splitIndex] == split.Name
+		// if the split is not in the splits array, do not serialize the split
+		if len(splits) > 0 && !splitInSplits {
+			continue
+		}
 		marshalledSplit, _ := json.Marshal(split)
 		splitsData[split.Name] = string(marshalledSplit)
 	}

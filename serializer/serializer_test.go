@@ -27,6 +27,10 @@ func (fetcher *mockFetcher) GetSerializedData() string {
 	return "foo"
 }
 
+func (fetcher *mockFetcher) GetSerializedDataSubset([]string) string {
+	return "bar"
+}
+
 func (fetcher *mockFetcher) GetSplitData() poller.SplitData {
 	if !fetcher.hasData {
 		return poller.SplitData{}
@@ -74,10 +78,24 @@ func TestGetSerializedDataValid(t *testing.T) {
 	serializer := NewSerializer(&mockFetcher{hasData: true})
 
 	// Act
-	result, err := serializer.GetSerializedData()
+	result, err := serializer.GetSerializedData([]string{})
 
 	// Validate that returned logging script contains the string from poller cache
 	expectedLoggingScript := "foo"
+	assert.Equal(t, result, expectedLoggingScript)
+	assert.Nil(t, err)
+}
+
+func TestGetSerializedDataWithNonEmptySplits(t *testing.T) {
+	// Arrange
+	splits := []string{"test-experiment-1"}
+	serializer := NewSerializer(&mockFetcher{hasData: true})
+
+	// Act
+	result, err := serializer.GetSerializedData(splits)
+
+	// Validate that returned logging script contains the string from poller cache
+	expectedLoggingScript := "bar"
 	assert.Equal(t, result, expectedLoggingScript)
 	assert.Nil(t, err)
 }

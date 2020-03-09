@@ -2,8 +2,10 @@ package poller
 
 import (
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/godaddy/split-go-serializer/v2/api"
 	"github.com/splitio/go-client/splitio/service/dtos"
@@ -14,6 +16,30 @@ const (
 	testKey           = "someKey"
 	serializeSegments = true
 )
+
+var mockMultipleSplits = map[string]dtos.SplitDTO{
+	"mock-split-1": {
+		Name:   "mock-split-1",
+		Status: "mock-status-1",
+	},
+	"mock-split-2": {
+		Name:   "mock-split-2",
+		Status: "mock-status-2",
+	},
+	"mock-split-3": {
+		Name:   "mock-split-3",
+		Status: "mock-status-3",
+	},
+}
+
+var mockSegments = map[string]dtos.SegmentChangesDTO{
+	"mock-segment-1": {
+		Name:  "mock-segment-1",
+		Added: []string{"foo", "bar"},
+		Since: 20,
+		Till:  20,
+	},
+}
 
 type mockSplitio struct {
 	mockSince              int64
@@ -26,7 +52,9 @@ func (splitio *mockSplitio) GetSplits() (map[string]dtos.SplitDTO, int64, error)
 	if splitio.getSplitValid {
 		mockSplit := dtos.SplitDTO{Name: "mock-split"}
 		mockSplitMap := map[string]dtos.SplitDTO{
-			"mock-split": mockSplit,
+			"mock-split":   mockSplit,
+			"mock-split-2": dtos.SplitDTO{Name: "mock-split-2"},
+			"mock-split-3": dtos.SplitDTO{Name: "mock-split-3"},
 		}
 		splitio.mockSince++
 		return mockSplitMap, splitio.mockSince, nil
@@ -86,6 +114,37 @@ func TestPollforChangesValid(t *testing.T) {
 	// Validate that after calling PollforChanges it returns the right value
 	assert.Equal(t, int64(1), returnedCache.Since)
 	assert.Equal(t, 1, returnedCache.UsingSegmentsCount)
+}
+
+func TestGetSerializedDataSubsetValid(t *testing.T) {
+	// Arrange
+	splits := []string{"mock-split-2"}
+	pollingRateSeconds := 1
+
+	//Act
+	result := NewPoller(testKey, pollingRateSeconds, serializeSegments,
+		&mockSplitio{getSplitValid: true, getSegmentValid: true})
+
+	// Validate that GetSerializedDataSubset returns serialized data subset properly
+
+	// before start, serialized subsets should not exist and subset should be an empty logging script
+	serializedCachedDataSubsetsBeforeStart := result.GetCachedSerializedDataSubsets()
+	assert.Equal(t, serializedCachedDataSubsetsBeforeStart, make(map[string]string))
+	subsetBeforeStart := result.GetSerializedDataSubset(splits)
+	assert.Equal(t, subsetBeforeStart, emptyCacheLoggingScript)
+
+	result.Start()
+	time.Sleep(1 * time.Second)
+
+	// after starting, serialized subsets should contain a valid logging script for our subset
+	serializedCachedDataSubsetsAfterStart := result.GetCachedSerializedDataSubsets()
+	expectedSerializedScript := generateSerializedData(result.GetSplitData(), splits)
+	assert.Equal(t, serializedCachedDataSubsetsAfterStart, map[string]string{
+		"mock-split-2": expectedSerializedScript,
+	})
+	subsetAfterStart := result.GetSerializedDataSubset(splits)
+	assert.Equal(t, subsetAfterStart, expectedSerializedScript)
+	result.quit <- true
 }
 
 func TestStartValid(t *testing.T) {
@@ -196,7 +255,7 @@ func TestJobsCanRunTwiceAfterStop(t *testing.T) {
 	assert.True(t, cacheAfterStart.UsingSegmentsCount > 0)
 	assert.Equal(t, cacheAfterStart.Splits["mock-split"].Name, "mock-split")
 	assert.Equal(t, cacheAfterStart.Segments["mock-segment"].Name, "mock-segment")
-	expectedSerializedScript := generateSerializedData(cacheAfterStart)
+	expectedSerializedScript := generateSerializedData(cacheAfterStart, []string{})
 	assert.Equal(t, serializedCacheAfterStart, expectedSerializedScript)
 	result.Stop()
 
@@ -321,25 +380,59 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 	assert.True(t, cacheSecondRound.UsingSegmentsCount > 0)
 	assert.Equal(t, cacheSecondRound.Splits["mock-split"].Name, "mock-split")
 	assert.Equal(t, cacheSecondRound.Segments["mock-segment"].Name, "mock-segment")
-	expectedSerializedScript := generateSerializedData(cacheSecondRound)
+	expectedSerializedScript := generateSerializedData(cacheSecondRound, []string{})
 	assert.Equal(t, serializedCacheSecondRound, expectedSerializedScript)
 	result.Stop()
 }
 
+func TestGetUpdatedSerializedDataSubsetsValid(t *testing.T) {
+	// Arrange
+	mockSplitData := SplitData{
+		Splits:             mockMultipleSplits,
+		Since:              1,
+		Segments:           mockSegments,
+		UsingSegmentsCount: 2,
+	}
+	serializedDataSubsets := map[string]string{
+		"mock-split-1.mock-split-2":              "",
+		"mock-split-1.mock-split-2.mock-split-3": "",
+		"mock-split-2":                           "",
+	}
+	poller := NewPoller(testKey, 1, serializeSegments,
+		&mockSplitio{getSplitValid: true, getSegmentValid: false})
+	cache := Cache{
+		SplitData:             mockSplitData,
+		SerializedData:        poller.GetSerializedData(),
+		serializedDataSubsets: serializedDataSubsets,
+	}
+	atomic.StorePointer(&poller.cache, unsafe.Pointer(&cache))
+
+	// Act
+	result := poller.getUpdatedSerializedDataSubsets(mockSplitData)
+
+	// Validate that serializedDataSubsets is updated with correct logging scripts
+	stringSplit := `"mock-split-%v":"{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-%v\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-%v\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}"`
+	mockSplitOneString := fmt.Sprintf(stringSplit, 1, 1, 1)
+	mockSplitTwoString := fmt.Sprintf(stringSplit, 2, 2, 2)
+	mockSplitThreeString := fmt.Sprintf(stringSplit, 3, 3, 3)
+	firstSplitDataString := fmt.Sprintf(`{%v,%v}`, mockSplitOneString, mockSplitTwoString)
+	secondSplitDataString := fmt.Sprintf(`{%v,%v,%v}`, mockSplitOneString, mockSplitTwoString, mockSplitThreeString)
+	thirdSplitDataString := fmt.Sprintf(`{%v}`, mockSplitTwoString)
+	stringSegments := `{"mock-segment-1":"{\"name\":\"mock-segment-1\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}"}`
+
+	expectedUpdatedSerializedDataSubsets := map[string]string{
+		"mock-split-1.mock-split-2":              fmt.Sprintf(formattedLoggingScript, firstSplitDataString, 1, stringSegments, 2),
+		"mock-split-1.mock-split-2.mock-split-3": fmt.Sprintf(formattedLoggingScript, secondSplitDataString, 1, stringSegments, 2),
+		"mock-split-2":                           fmt.Sprintf(formattedLoggingScript, thirdSplitDataString, 1, stringSegments, 2),
+	}
+	assert.Equal(t, result, expectedUpdatedSerializedDataSubsets)
+}
 func TestGenerateSerializedDataValid(t *testing.T) {
 	// Arrange
 	mockSplits := map[string]dtos.SplitDTO{
 		"mock-split-1": {
 			Name:   "mock-split-1",
 			Status: "mock-status-1",
-		},
-	}
-	mockSegments := map[string]dtos.SegmentChangesDTO{
-		"mock-segment-1": {
-			Name:  "mock-segment-1",
-			Added: []string{"foo", "bar"},
-			Since: 20,
-			Till:  20,
 		},
 	}
 	mockSplitData := SplitData{
@@ -349,7 +442,7 @@ func TestGenerateSerializedDataValid(t *testing.T) {
 		UsingSegmentsCount: 2,
 	}
 	// Act
-	result := generateSerializedData(mockSplitData)
+	result := generateSerializedData(mockSplitData, []string{})
 
 	// Validate that returned logging script contains a valid SplitData
 	stringSplits := `{"mock-split-1":"{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-1\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-1\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}"}`
@@ -358,9 +451,29 @@ func TestGenerateSerializedDataValid(t *testing.T) {
 	assert.Equal(t, result, expectedLoggingScript)
 }
 
+func TestGenerateSerializedDataWithSplits(t *testing.T) {
+	// Arrange
+	splits := []string{"mock-split-2"}
+	mockSplitData := SplitData{
+		Splits:             mockMultipleSplits,
+		Since:              1,
+		Segments:           mockSegments,
+		UsingSegmentsCount: 2,
+	}
+
+	// Act
+	result := generateSerializedData(mockSplitData, splits)
+
+	// Validate that returned logging script only contains SplitData for splits passed in
+	stringSplits := `{"mock-split-2":"{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-2\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-2\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}"}`
+	stringSegments := `{"mock-segment-1":"{\"name\":\"mock-segment-1\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}"}`
+	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, stringSplits, 1, stringSegments, 2)
+	assert.Equal(t, result, expectedLoggingScript)
+}
+
 func TestGenerateSerializedDataMarshalEmptyCache(t *testing.T) {
 	// Act
-	result := generateSerializedData(SplitData{})
+	result := generateSerializedData(SplitData{}, []string{})
 
 	// Validate that returned logging script contains a valid SplitData
 	expectedLoggingScript := fmt.Sprintf(emptyCacheLoggingScript)
@@ -369,7 +482,7 @@ func TestGenerateSerializedDataMarshalEmptyCache(t *testing.T) {
 
 func TestGenerateSerializedDataSplitError(t *testing.T) {
 	// Act
-	result := generateSerializedData(SplitData{})
+	result := generateSerializedData(SplitData{}, []string{})
 
 	// Validate that returned logging script contains a valid SplitData
 	expectedLoggingScript := fmt.Sprintf(emptyCacheLoggingScript)
