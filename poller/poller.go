@@ -18,11 +18,10 @@ const emptyCacheLoggingScript = `<script>window.__splitCachePreload = {}</script
 
 const formattedLoggingScript = `<script>window.__splitCachePreload = { splitsData: %v, since: %v, segmentsData: %v, usingSegmentsCount: %v }</script>`
 
-// Fetcher is an interface contains GetSplitData, Start and Stop functions
+// Fetcher is an interface contains GetSerializedData, Start and Stop functions
 type Fetcher interface {
 	Start()
 	Stop()
-	GetSplitData() SplitData
 	GetSerializedData() string
 	GetSerializedDataSubset([]string) string
 }
@@ -113,11 +112,6 @@ func (poller *Poller) pollForChanges() {
 
 }
 
-// GetSplitData returns split data cache results
-func (poller *Poller) GetSplitData() SplitData {
-	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).SplitData
-}
-
 // GetSerializedData returns serialized data cache results
 func (poller *Poller) GetSerializedData() string {
 	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).SerializedData
@@ -125,7 +119,7 @@ func (poller *Poller) GetSerializedData() string {
 
 // GetSerializedDataSubset returns serialized data cache results for the subset of splits
 func (poller *Poller) GetSerializedDataSubset(splits []string) string {
-	currentSplitData := poller.GetSplitData()
+	currentSplitData := getSplitData(poller)
 	updatedSubsets := poller.getCachedSerializedDataSubsets()
 	sort.Strings(splits)
 	key := strings.Join(splits, ".")
@@ -222,4 +216,9 @@ func generateSerializedData(splitData SplitData, splits []string) string {
 	splitCachePreload := &SplitCachePreload{splitData.Since, splitData.UsingSegmentsCount, string(marshalledSplits), string(marshalledSegments)}
 
 	return fmt.Sprintf(formattedLoggingScript, splitCachePreload.SplitsData, splitCachePreload.Since, splitCachePreload.SegmentsData, splitCachePreload.UsingSegmentsCount)
+}
+
+// getSplitData helper returns split data cache results
+func getSplitData(poller *Poller) SplitData {
+	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).SplitData
 }

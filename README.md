@@ -23,20 +23,17 @@ A Go module which fetches split definitions and segments from Split.io and seria
 
 Use this Go module in your server-side Go environment. The serializer exposes:
 1. a `Poller` that periodically requests raw experiment configuration data from Split.io. Requests happen in the background and the poller caches the latest data in local memory.
-1. a `Serializer` that reads from the poller's cache, serializes the data, and returns it in a script to be injected into a client's HTML.
 
 ### Instantiation
 
-Create an instance of `Poller` and `Serializer` by importing the `poller` and `serializer` package of this module and calling the `NewPoller` and `NewSerializer` function with some parameters :
+Create an instance of `Poller` by importing the `poller` package of this module and calling the `NewPoller` function with some parameters :
 
 ```go
 import (
     "github.com/godaddy/split-go-serializer/poller"
-    "github.com/godaddy/split-go-serializer/serializer"
 )
 
 poller := poller.NewPoller("YOUR_API_KEY", 600, false, nil)
-serializer := serializer.NewSerializer(poller)
 ```
 
 The following option properties are available to the `Poller`:
@@ -73,9 +70,9 @@ poller.Stop()
 
 The poller sends an error message to `poller.Error` channel when getting errors from the Split.io API.
 
-#### getSerializedData
+#### GetSerializedData
 
-`getSerializedData` will read the latest data from the cache and return a script
+`GetSerializedData` will read the latest data from the cache and return a script
 that adds serialized data to the `window.__splitCachePreload` object. The
 serialized data will be used to determine cohort allocations.
 
@@ -86,7 +83,7 @@ serialized data will be used to determine cohort allocations.
 | splits | Array of strings that, if non-empty, filters the `splitsData` |
 
 ```go
-serializedDataScript := serializer.GetSerializedData([]string{})
+serializedDataScript := poller.GetSerializedData([]string{})
 fmt.Println(serializedDataScript)
 
 //<script>
