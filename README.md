@@ -26,7 +26,7 @@ Use this Go module in your server-side Go environment. The serializer exposes:
 
 ### Instantiation
 
-Create an instance of `Poller`  by importing the `poller` package of this module and calling the `NewPoller` function with some parameters :
+Create an instance of `Poller` by importing the `poller` package of this module and calling the `NewPoller` function with some parameters :
 
 ```go
 import (
