@@ -128,7 +128,7 @@ func TestGetSerializedDataSubsetValid(t *testing.T) {
 	// Validate that GetSerializedDataSubset returns serialized data subset properly
 
 	// before start, serialized subsets should not exist and subset should be an empty logging script
-	serializedCachedDataSubsetsBeforeStart := result.GetCachedSerializedDataSubsets()
+	serializedCachedDataSubsetsBeforeStart := result.getCachedSerializedDataSubsets()
 	assert.Equal(t, serializedCachedDataSubsetsBeforeStart, make(map[string]string))
 	subsetBeforeStart := result.GetSerializedDataSubset(splits)
 	assert.Equal(t, subsetBeforeStart, emptyCacheLoggingScript)
@@ -137,7 +137,7 @@ func TestGetSerializedDataSubsetValid(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	// after starting, serialized subsets should contain a valid logging script for our subset
-	serializedCachedDataSubsetsAfterStart := result.GetCachedSerializedDataSubsets()
+	serializedCachedDataSubsetsAfterStart := result.getCachedSerializedDataSubsets()
 	expectedSerializedScript := generateSerializedData(result.GetSplitData(), splits)
 	assert.Equal(t, serializedCachedDataSubsetsAfterStart, map[string]string{
 		"mock-split-2": expectedSerializedScript,

@@ -112,10 +112,20 @@ func (poller *Poller) pollForChanges() {
 	atomic.StorePointer(&poller.cache, unsafe.Pointer(&updatedCache))
 }
 
+// GetSplitData returns split data cache results
+func (poller *Poller) GetSplitData() SplitData {
+	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).SplitData
+}
+
+// GetSerializedData returns serialized data cache results
+func (poller *Poller) GetSerializedData() string {
+	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).SerializedData
+}
+
 // GetSerializedDataSubset returns serialized data cache results for the subset of splits
 func (poller *Poller) GetSerializedDataSubset(splits []string) string {
 	currentSplitData := poller.GetSplitData()
-	updatedSubsets := poller.GetCachedSerializedDataSubsets()
+	updatedSubsets := poller.getCachedSerializedDataSubsets()
 	sort.Strings(splits)
 	key := strings.Join(splits, ".")
 
@@ -135,21 +145,6 @@ func (poller *Poller) GetSerializedDataSubset(splits []string) string {
 	atomic.StorePointer(&poller.cache, unsafe.Pointer(&updatedCache))
 
 	return subset
-}
-
-// GetSplitData returns split data cache results
-func (poller *Poller) GetSplitData() SplitData {
-	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).SplitData
-}
-
-// GetSerializedData returns serialized data cache results
-func (poller *Poller) GetSerializedData() string {
-	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).SerializedData
-}
-
-// GetCachedSerializedDataSubsets returns splits data subsets that are cached
-func (poller *Poller) GetCachedSerializedDataSubsets() map[string]string {
-	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).serializedDataSubsets
 }
 
 // Start creates a goroutine and keep tracking until it stops
@@ -179,11 +174,16 @@ func (poller *Poller) jobs() {
 
 // getUpdatedSerializedDataSubsets updates cached serializedDataSubsets based on new splits data
 func (poller *Poller) getUpdatedSerializedDataSubsets(newSplitData SplitData) map[string]string {
-	updatedSubsets := poller.GetCachedSerializedDataSubsets()
+	updatedSubsets := poller.getCachedSerializedDataSubsets()
 	for key := range updatedSubsets {
 		updatedSubsets[key] = generateSerializedData(newSplitData, strings.Split(key, "."))
 	}
 	return updatedSubsets
+}
+
+// GetCachedSerializedDataSubsets returns splits data subsets that are cached
+func (poller *Poller) getCachedSerializedDataSubsets() map[string]string {
+	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).serializedDataSubsets
 }
 
 // generateSerializedData takes SplitData and generates a script tag
