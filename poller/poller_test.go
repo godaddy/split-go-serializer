@@ -15,6 +15,7 @@ import (
 const (
 	testKey           = "someKey"
 	serializeSegments = true
+	stringSegments    = `{"mock-segment-1":"{\"name\":\"mock-segment-1\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}"}`
 )
 
 var mockMultipleSplits = map[string]dtos.SplitDTO{
@@ -418,7 +419,6 @@ func TestGetUpdatedSerializedDataSubsetsValid(t *testing.T) {
 	firstSplitDataString := fmt.Sprintf(`{%v,%v}`, mockSplitOneString, mockSplitTwoString)
 	secondSplitDataString := fmt.Sprintf(`{%v,%v,%v}`, mockSplitOneString, mockSplitTwoString, mockSplitThreeString)
 	thirdSplitDataString := fmt.Sprintf(`{%v}`, mockSplitTwoString)
-	stringSegments := `{"mock-segment-1":"{\"name\":\"mock-segment-1\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}"}`
 
 	expectedUpdatedSerializedDataSubsets := map[string]string{
 		"mock-split-1.mock-split-2":              fmt.Sprintf(formattedLoggingScript, firstSplitDataString, 1, stringSegments, 2),
@@ -446,7 +446,6 @@ func TestGenerateSerializedDataValid(t *testing.T) {
 
 	// Validate that returned logging script contains a valid SplitData
 	stringSplits := `{"mock-split-1":"{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-1\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-1\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}"}`
-	stringSegments := `{"mock-segment-1":"{\"name\":\"mock-segment-1\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}"}`
 	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, stringSplits, 1, stringSegments, 2)
 	assert.Equal(t, result, expectedLoggingScript)
 }
@@ -466,8 +465,26 @@ func TestGenerateSerializedDataWithSplits(t *testing.T) {
 
 	// Validate that returned logging script only contains SplitData for splits passed in
 	stringSplits := `{"mock-split-2":"{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-2\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-2\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}"}`
-	stringSegments := `{"mock-segment-1":"{\"name\":\"mock-segment-1\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}"}`
 	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, stringSplits, 1, stringSegments, 2)
+	assert.Equal(t, result, expectedLoggingScript)
+}
+
+func TestGenerateSerializedDataWithInvalidSplitsReturnsNoSplitsData(t *testing.T) {
+	// Arrange
+	splits := []string{"invalid-split-1", "invalid-split-2"}
+	mockSplitData := SplitData{
+		Splits:             mockMultipleSplits,
+		Since:              1,
+		Segments:           mockSegments,
+		UsingSegmentsCount: 2,
+	}
+
+	// Act
+	result := generateSerializedData(mockSplitData, splits)
+
+	// Validate that returned logging script does not contain any splits data
+	emptySplits := "{}"
+	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, emptySplits, 1, stringSegments, 2)
 	assert.Equal(t, result, expectedLoggingScript)
 }
 

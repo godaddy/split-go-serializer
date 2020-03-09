@@ -225,7 +225,7 @@ func getSerializedData(poller *Poller) string {
 	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).SerializedData
 }
 
-// getSerializedData helper returns serialized data subset cache results
+// getCachedSerializedDataSubsets helper returns serialized data subset cache results
 func getCachedSerializedDataSubsets(poller *Poller) map[string]string {
 	return (*(*Cache)(atomic.LoadPointer(&poller.cache))).serializedDataSubsets
 }
