@@ -76,7 +76,7 @@ The poller sends an error message to `poller.Error` channel when getting errors 
 that adds serialized data to the `window.__splitCachePreload` object. The
 serialized data will be used to determine cohort allocations.
 
-`getSerializedData` accepts the following arguments:
+`GetSerializedData` accepts the following arguments:
 
 | Property                      | Description |
 |-------------------------------|-------------|
