@@ -411,7 +411,7 @@ func TestGetUpdatedSerializedDataSubsetsValid(t *testing.T) {
 	// Act
 	result := poller.getUpdatedSerializedDataSubsets(mockSplitData)
 
-	// Validate that and updated serializedDataSubsets, with correct logging scripts, is returned
+	// Validate that an updated serializedDataSubsets, with correct logging scripts, is returned
 	stringSplit := `"mock-split-%v":"{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-%v\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-%v\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}"`
 	mockSplitOneString := fmt.Sprintf(stringSplit, 1, 1, 1)
 	mockSplitTwoString := fmt.Sprintf(stringSplit, 2, 2, 2)
