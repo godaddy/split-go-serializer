@@ -80,7 +80,7 @@ serialized data will be used to determine cohort allocations.
 
 | Property                      | Description |
 |-------------------------------|-------------|
-| splits | Array of strings that, if non-empty, filters the `splitsData` |
+| splitNames | Array of strings that, if non-empty, filters the `splitsData` |
 
 ```go
 serializedDataScript := poller.GetSerializedData([]string{})

@@ -355,7 +355,7 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 	result.Stop()
 }
 
-func TestGetSerializedDataWithSplitsPassedIn(t *testing.T) {
+func TestGetSerializedDataWithSplitNamesPassedIn(t *testing.T) {
 	// Arrange
 	splitNames := []string{"mock-split-2"}
 	pollingRateSeconds := 1
@@ -453,7 +453,7 @@ func TestGenerateSerializedDataValid(t *testing.T) {
 	assert.Equal(t, result, expectedLoggingScript)
 }
 
-func TestGenerateSerializedDataWithNonEmptySplits(t *testing.T) {
+func TestGenerateSerializedDataWithNonEmptySplitNames(t *testing.T) {
 	// Arrange
 	splitNames := []string{"mock-split-2"}
 	mockSplitData := SplitData{
