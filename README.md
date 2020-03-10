@@ -76,8 +76,14 @@ The poller sends an error message to `poller.Error` channel when getting errors 
 that adds serialized data to the `window.__splitCachePreload` object. The
 serialized data will be used to determine cohort allocations.
 
+`GetSerializedData` accepts the following arguments:
+
+| Property                      | Description |
+|-------------------------------|-------------|
+| splitNames | Array of strings that, if non-empty, filters the `splitsData` |
+
 ```go
-serializedDataScript := poller.GetSerializedData()
+serializedDataScript := poller.GetSerializedData([]string{})
 fmt.Println(serializedDataScript)
 
 //<script>
@@ -85,6 +91,22 @@ fmt.Println(serializedDataScript)
 //    splitsData: {
 //      "split-1-name":"{\"name\":\"split-1-name\",\"status\":\"bar\"}",
 //      "split-2-name":"{\"name\":\"split-2-name\",\"status\":\"baz\"}"
+//    },
+//    since: 1,
+//    segmentsData: {
+//       "test-segment":"{\"name\":\"test-segment\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}"
+//    },
+//    usingSegmentsCount: 2
+//  }
+//</script>
+
+serializedDataScript = poller.GetSerializedData([]string{"split-1-name"})
+fmt.Println(serializedDataScript)
+
+//<script>
+//  window.__splitCachePreload = {
+//    splitsData: {
+//      "split-1-name":"{\"name\":\"split-1-name\",\"status\":\"bar\"}"
 //    },
 //    since: 1,
 //    segmentsData: {
