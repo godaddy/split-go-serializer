@@ -39,7 +39,7 @@ type Poller struct {
 type Cache struct {
 	splitData             SplitData
 	serializedData        string
-	serializedDataSubsets map[string]string
+	serializedDataSubsets map[string]string // key will be a period-delimited string of sorted split names (AKA a subset)
 }
 
 // SplitData contains Splits and Segments which is supposed to be updated periodically
@@ -112,9 +112,9 @@ func (poller *Poller) pollForChanges() {
 }
 
 // GetSerializedData returns serialized data cache results
-func (poller *Poller) GetSerializedData(splits []string) string {
-	if len(splits) > 0 {
-		return poller.getSerializedDataSubset(splits)
+func (poller *Poller) GetSerializedData(splitNames []string) string {
+	if len(splitNames) > 0 {
+		return poller.getSerializedDataSubset(splitNames)
 	}
 	return poller.getSerializedData()
 }
@@ -144,18 +144,18 @@ func (poller *Poller) jobs() {
 	}
 }
 
-// getSerializedDataSubset returns serialized data for the splits provided
-func (poller *Poller) getSerializedDataSubset(splits []string) string {
+// getSerializedDataSubset returns serialized data for the splitNames provided
+func (poller *Poller) getSerializedDataSubset(splitNames []string) string {
 	currentSplitData := poller.getSplitData()
 	updatedSubsets := poller.getCachedSerializedDataSubsets()
-	sort.Strings(splits)
-	key := strings.Join(splits, ".")
+	sort.Strings(splitNames)
+	key := strings.Join(splitNames, ".")
 
 	subset, inMap := updatedSubsets[key]
 	if inMap {
 		return subset
 	}
-	subset = generateSerializedData(currentSplitData, splits)
+	subset = generateSerializedData(currentSplitData, splitNames)
 	updatedSubsets[key] = subset
 
 	// update cache
@@ -180,25 +180,25 @@ func (poller *Poller) getUpdatedSerializedDataSubsets(newSplitData SplitData) ma
 
 // generateSerializedData takes SplitData and generates a script tag
 // that saves the SplitData info to the window object of the browser
-func generateSerializedData(splitData SplitData, splits []string) string {
+func generateSerializedData(splitData SplitData, splitNames []string) string {
 	if reflect.DeepEqual(splitData, SplitData{}) {
 		return emptyCacheLoggingScript
 	}
-	splitsData := map[string]string{}
+	splitNamesToSerializedData := map[string]string{}
 
 	// Serialize values for splits
 	for _, split := range splitData.Splits {
-		splitIndex := sort.SearchStrings(splits, split.Name)
-		splitInSplits := splitIndex < len(splits) && splits[splitIndex] == split.Name
-		// if the split is not in the splits array, do not serialize the split
-		if len(splits) > 0 && !splitInSplits {
+		index := sort.SearchStrings(splitNames, split.Name)
+		splitIsInSplitNames := index < len(splitNames) && splitNames[index] == split.Name
+		// if the split is not in the splitNames array, do not serialize the split
+		if len(splitNames) > 0 && !splitIsInSplitNames {
 			continue
 		}
 		marshalledSplit, _ := json.Marshal(split)
-		splitsData[split.Name] = string(marshalledSplit)
+		splitNamesToSerializedData[split.Name] = string(marshalledSplit)
 	}
 
-	marshalledSplits, _ := json.Marshal(splitsData)
+	marshalledSplits, _ := json.Marshal(splitNamesToSerializedData)
 
 	segmentsData := map[string]string{}
 

@@ -357,7 +357,7 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 
 func TestGetSerializedDataWithSplitsPassedIn(t *testing.T) {
 	// Arrange
-	splits := []string{"mock-split-2"}
+	splitNames := []string{"mock-split-2"}
 	pollingRateSeconds := 1
 
 	//Act
@@ -368,7 +368,7 @@ func TestGetSerializedDataWithSplitsPassedIn(t *testing.T) {
 
 	// before start, cached serialized subsets should be an empty logging script for the subset and the serialized data returned should be an empty logging script
 	serializedCachedDataSubsetsBeforeStart := result.getCachedSerializedDataSubsets()
-	subsetBeforeStart := result.GetSerializedData(splits)
+	subsetBeforeStart := result.GetSerializedData(splitNames)
 	assert.Equal(t, serializedCachedDataSubsetsBeforeStart, map[string]string{
 		"mock-split-2": emptyCacheLoggingScript,
 	})
@@ -380,8 +380,8 @@ func TestGetSerializedDataWithSplitsPassedIn(t *testing.T) {
 	// after starting, cached serialized subsets should contain a valid logging script
 	cacheSplitData := result.getSplitData()
 	serializedCachedDataSubsetsAfterStart := result.getCachedSerializedDataSubsets()
-	subsetAfterStart := result.GetSerializedData(splits)
-	expectedSerializedScript := generateSerializedData(cacheSplitData, splits)
+	subsetAfterStart := result.GetSerializedData(splitNames)
+	expectedSerializedScript := generateSerializedData(cacheSplitData, splitNames)
 	assert.Equal(t, serializedCachedDataSubsetsAfterStart, map[string]string{
 		"mock-split-2": expectedSerializedScript,
 	})
@@ -455,7 +455,7 @@ func TestGenerateSerializedDataValid(t *testing.T) {
 
 func TestGenerateSerializedDataWithNonEmptySplits(t *testing.T) {
 	// Arrange
-	splits := []string{"mock-split-2"}
+	splitNames := []string{"mock-split-2"}
 	mockSplitData := SplitData{
 		Splits:             mockMultipleSplits,
 		Since:              1,
@@ -464,7 +464,7 @@ func TestGenerateSerializedDataWithNonEmptySplits(t *testing.T) {
 	}
 
 	// Act
-	result := generateSerializedData(mockSplitData, splits)
+	result := generateSerializedData(mockSplitData, splitNames)
 
 	// Validate that returned logging script only contains SplitData for splits passed in
 	stringSplits := `{"mock-split-2":"{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-2\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-2\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}"}`
@@ -474,7 +474,7 @@ func TestGenerateSerializedDataWithNonEmptySplits(t *testing.T) {
 
 func TestGenerateSerializedDataWithInvalidSplitsReturnsNoSplitsData(t *testing.T) {
 	// Arrange
-	splits := []string{"invalid-split-1", "invalid-split-2"}
+	splitNames := []string{"invalid-split-1", "invalid-split-2"}
 	mockSplitData := SplitData{
 		Splits:             mockMultipleSplits,
 		Since:              1,
@@ -483,7 +483,7 @@ func TestGenerateSerializedDataWithInvalidSplitsReturnsNoSplitsData(t *testing.T
 	}
 
 	// Act
-	result := generateSerializedData(mockSplitData, splits)
+	result := generateSerializedData(mockSplitData, splitNames)
 
 	// Validate that returned logging script does not contain any splits data
 	emptySplits := "{}"
