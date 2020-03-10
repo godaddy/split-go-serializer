@@ -110,7 +110,7 @@ func TestPollforChangesValid(t *testing.T) {
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments,
 		&mockSplitio{getSplitValid: true, getSegmentValid: true})
 	result.pollForChanges()
-	returnedCache := getSplitData(result)
+	returnedCache := result.getSplitData()
 
 	// Validate that after calling PollforChanges it returns the right value
 	assert.Equal(t, int64(1), returnedCache.Since)
@@ -126,13 +126,13 @@ func TestStartValid(t *testing.T) {
 		&mockSplitio{getSplitValid: true, getSegmentValid: true})
 
 	// Validate that after calling Start the cache is updated
-	cacheBeforeStart := getSplitData(result)
+	cacheBeforeStart := result.getSplitData()
 	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
 	result.Start()
 	time.Sleep(2 * time.Second)
-	cacheAfterStart := getSplitData(result)
+	cacheAfterStart := result.getSplitData()
 	assert.True(t, cacheAfterStart.Since > 1)
 	assert.True(t, cacheAfterStart.UsingSegmentsCount > 0)
 	result.quit <- true
@@ -147,15 +147,15 @@ func TestStopValid(t *testing.T) {
 		&mockSplitio{getSplitValid: true})
 
 	// Validate that when Stop is called, jobs will stop
-	cacheBeforeStart := getSplitData(result)
+	cacheBeforeStart := result.getSplitData()
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	go result.jobs()
 	time.Sleep(2 * time.Second)
 	result.Stop()
-	cacheAfterStop := getSplitData(result)
+	cacheAfterStop := result.getSplitData()
 	assert.True(t, cacheAfterStop.Since > 0)
 	time.Sleep(2 * time.Second)
-	assert.Equal(t, cacheAfterStop.Since, getSplitData(result).Since)
+	assert.Equal(t, cacheAfterStop.Since, result.getSplitData().Since)
 }
 
 func TestJobsUpdatesCache(t *testing.T) {
@@ -167,12 +167,12 @@ func TestJobsUpdatesCache(t *testing.T) {
 		&mockSplitio{getSplitValid: true, getSegmentValid: true})
 
 	// Validate that after calling jobs the cache is updated
-	cacheBeforeStart := getSplitData(result)
+	cacheBeforeStart := result.getSplitData()
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
 	go result.jobs()
 	time.Sleep(2 * time.Second)
-	cacheAfterStart := getSplitData(result)
+	cacheAfterStart := result.getSplitData()
 	assert.True(t, cacheAfterStart.Since > 0)
 	assert.True(t, cacheAfterStart.UsingSegmentsCount > 0)
 	result.quit <- true
@@ -187,15 +187,15 @@ func TestJobsStopsWhenQuit(t *testing.T) {
 		&mockSplitio{getSplitValid: true})
 
 	// Validate that Jobs stop if quit is set to true
-	cacheBeforeStart := getSplitData(result)
+	cacheBeforeStart := result.getSplitData()
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	go result.jobs()
 	time.Sleep(2 * time.Second)
-	assert.True(t, getSplitData(result).Since > 0)
+	assert.True(t, result.getSplitData().Since > 0)
 	result.quit <- true
-	cacheAfterStop := getSplitData(result)
+	cacheAfterStop := result.getSplitData()
 	time.Sleep(2 * time.Second)
-	assert.Equal(t, cacheAfterStop.Since, getSplitData(result).Since)
+	assert.Equal(t, cacheAfterStop.Since, result.getSplitData().Since)
 }
 
 func TestJobsCanRunTwiceAfterStop(t *testing.T) {
@@ -209,7 +209,7 @@ func TestJobsCanRunTwiceAfterStop(t *testing.T) {
 	// Validate that jobs can be run more than once
 
 	// First loop
-	cacheBeforeStart := getSplitData(result)
+	cacheBeforeStart := result.getSplitData()
 	serializedCacheBeforeStart := result.GetSerializedData([]string{})
 	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
@@ -219,7 +219,7 @@ func TestJobsCanRunTwiceAfterStop(t *testing.T) {
 	time.Sleep(3 * time.Second)
 
 	// assert loop calls function so cache is updated
-	cacheAfterStart := getSplitData(result)
+	cacheAfterStart := result.getSplitData()
 	serializedCacheAfterStart := result.GetSerializedData([]string{})
 	assert.True(t, cacheAfterStart.Since > 0)
 	assert.True(t, cacheAfterStart.UsingSegmentsCount > 0)
@@ -229,20 +229,20 @@ func TestJobsCanRunTwiceAfterStop(t *testing.T) {
 	assert.Equal(t, serializedCacheAfterStart, expectedSerializedScript)
 	result.Stop()
 
-	firstSince := getSplitData(result).Since
-	firstCount := getSplitData(result).UsingSegmentsCount
+	firstSince := result.getSplitData().Since
+	firstCount := result.getSplitData().UsingSegmentsCount
 	time.Sleep(3 * time.Second)
 	// verfify Cache didn't update after stop
-	assert.Equal(t, getSplitData(result).Since, firstSince)
-	assert.Equal(t, getSplitData(result).UsingSegmentsCount, firstCount)
+	assert.Equal(t, result.getSplitData().Since, firstSince)
+	assert.Equal(t, result.getSplitData().UsingSegmentsCount, firstCount)
 
 	// Second loop
 	go result.jobs()
 	time.Sleep(2 * time.Second)
 
 	// verfify cache is updated due to second loop
-	assert.True(t, getSplitData(result).Since > firstSince)
-	assert.True(t, getSplitData(result).UsingSegmentsCount > firstCount)
+	assert.True(t, result.getSplitData().Since > firstSince)
+	assert.True(t, result.getSplitData().UsingSegmentsCount > firstCount)
 	result.Stop()
 }
 
@@ -257,7 +257,7 @@ func TestPollforChangesReturnsGetSplitsError(t *testing.T) {
 	var err error
 
 	// Validate that error is received when getSplits returns error and cache isn't updated
-	cacheBeforeStart := getSplitData(result)
+	cacheBeforeStart := result.getSplitData()
 	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
@@ -266,7 +266,7 @@ func TestPollforChangesReturnsGetSplitsError(t *testing.T) {
 	if err != nil {
 		hasErr = true
 	}
-	cacheAfterError := getSplitData(result)
+	cacheAfterError := result.getSplitData()
 	assert.Equal(t, cacheAfterError, SplitData{})
 	assert.Equal(t, cacheAfterError.Since, int64(0))
 	assert.Equal(t, cacheAfterError.UsingSegmentsCount, 0)
@@ -286,7 +286,7 @@ func TestPollforChangesReturnsGetSegmentsError(t *testing.T) {
 	var err error
 
 	// Validate that error is received when getSegments returns error and cache isn't updated
-	cacheBeforeStart := getSplitData(result)
+	cacheBeforeStart := result.getSplitData()
 	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
 	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
@@ -295,7 +295,7 @@ func TestPollforChangesReturnsGetSegmentsError(t *testing.T) {
 	if err != nil {
 		hasErr = true
 	}
-	cacheAfterError := getSplitData(result)
+	cacheAfterError := result.getSplitData()
 	assert.Equal(t, cacheAfterError, SplitData{})
 	assert.Equal(t, cacheAfterError.Since, int64(0))
 	assert.Equal(t, cacheAfterError.UsingSegmentsCount, 0)
@@ -320,7 +320,7 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 	// Validate that after first time error cache can still be updated
 
 	// first loop
-	cacheBeforeStart := getSplitData(result)
+	cacheBeforeStart := result.getSplitData()
 	serializedCacheBeforeStart := result.GetSerializedData([]string{})
 	assert.Equal(t, cacheBeforeStart, SplitData{})
 	assert.Equal(t, cacheBeforeStart.Since, int64(0))
@@ -331,7 +331,7 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 	if err != nil {
 		hasErr = true
 	}
-	cacheAfterError := getSplitData(result)
+	cacheAfterError := result.getSplitData()
 	serializedCacheAfterError := result.GetSerializedData([]string{})
 	assert.Equal(t, cacheAfterError, SplitData{})
 	assert.Equal(t, cacheAfterError.Since, int64(0))
@@ -344,7 +344,7 @@ func TestJobsKeepRunningAfterGettingError(t *testing.T) {
 	mockSplitioDataGetter.getSplitValid = true
 	mockSplitioDataGetter.getSegmentValid = true
 	time.Sleep(5 * time.Second)
-	cacheSecondRound := getSplitData(result)
+	cacheSecondRound := result.getSplitData()
 	serializedCacheSecondRound := result.GetSerializedData([]string{})
 	assert.True(t, cacheSecondRound.Since > 0)
 	assert.True(t, cacheSecondRound.UsingSegmentsCount > 0)
@@ -366,22 +366,25 @@ func TestGetSerializedDataWithSplitsPassedIn(t *testing.T) {
 
 	// Validate that GetSerializedData returns serialized data subset properly
 
-	// before start, cached serialized subsets should be empty and the serialized data returned should be an empty logging script
-	serializedCachedDataSubsetsBeforeStart := getCachedSerializedDataSubsets(result)
-	assert.Equal(t, serializedCachedDataSubsetsBeforeStart, make(map[string]string))
+	// before start, cached serialized subsets should be an empty logging script for the subset and the serialized data returned should be an empty logging script
+	serializedCachedDataSubsetsBeforeStart := result.getCachedSerializedDataSubsets()
 	subsetBeforeStart := result.GetSerializedData(splits)
+	assert.Equal(t, serializedCachedDataSubsetsBeforeStart, map[string]string{
+		"mock-split-2": emptyCacheLoggingScript,
+	})
 	assert.Equal(t, subsetBeforeStart, emptyCacheLoggingScript)
 
 	result.Start()
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	// after starting, cached serialized subsets should contain a valid logging script
-	serializedCachedDataSubsetsAfterStart := getCachedSerializedDataSubsets(result)
-	expectedSerializedScript := generateSerializedData(getSplitData(result), splits)
+	cacheSplitData := result.getSplitData()
+	serializedCachedDataSubsetsAfterStart := result.getCachedSerializedDataSubsets()
+	subsetAfterStart := result.GetSerializedData(splits)
+	expectedSerializedScript := generateSerializedData(cacheSplitData, splits)
 	assert.Equal(t, serializedCachedDataSubsetsAfterStart, map[string]string{
 		"mock-split-2": expectedSerializedScript,
 	})
-	subsetAfterStart := result.GetSerializedData(splits)
 	assert.Equal(t, subsetAfterStart, expectedSerializedScript)
 	result.quit <- true
 }
@@ -402,8 +405,8 @@ func TestGetUpdatedSerializedDataSubsetsValid(t *testing.T) {
 	poller := NewPoller(testKey, 1, serializeSegments,
 		&mockSplitio{getSplitValid: true, getSegmentValid: false})
 	cache := Cache{
-		SplitData:             mockSplitData,
-		SerializedData:        poller.GetSerializedData([]string{}),
+		splitData:             mockSplitData,
+		serializedData:        poller.GetSerializedData([]string{}),
 		serializedDataSubsets: serializedDataSubsets,
 	}
 	atomic.StorePointer(&poller.cache, unsafe.Pointer(&cache))

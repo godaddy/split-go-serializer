@@ -99,6 +99,22 @@ fmt.Println(serializedDataScript)
 //    usingSegmentsCount: 2
 //  }
 //</script>
+
+serializedDataScript = poller.GetSerializedData([]string{"split-1-name"})
+fmt.Println(serializedDataScript)
+
+//<script>
+//  window.__splitCachePreload = {
+//    splitsData: {
+//      "split-1-name":"{\"name\":\"split-1-name\",\"status\":\"bar\"}"
+//    },
+//    since: 1,
+//    segmentsData: {
+//       "test-segment":"{\"name\":\"test-segment\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}"
+//    },
+//    usingSegmentsCount: 2
+//  }
+//</script>
 ```
 
 ## Testing
