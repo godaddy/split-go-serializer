@@ -491,7 +491,7 @@ func TestGenerateSerializedDataWithNonEmptySplitNames(t *testing.T) {
 	assert.Equal(t, result, expectedLoggingScript)
 }
 
-func TestGenerateSerializedDataWithInvalidSegmentsReturnsEmptyScript(t *testing.T) {
+func TestGenerateSerializedDataWithNonEmptySplitNamesAndInvalidSegmentsReturnsEmptyScript(t *testing.T) {
 	// Arrange
 	getSegmentValid := false
 	poller := NewPoller(testKey, 1, serializeSegments,
