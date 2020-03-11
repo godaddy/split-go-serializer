@@ -100,7 +100,7 @@ func (poller *Poller) pollForChanges() {
 		Segments:           segments,
 		UsingSegmentsCount: usingSegmentsCount,
 	}
-	serializedData := generateSerializedData(splitData, []string{})
+	serializedData := poller.generateSerializedData(splitData, []string{})
 
 	updatedCache := Cache{
 		splitData:             splitData,
@@ -155,7 +155,7 @@ func (poller *Poller) getSerializedDataSubset(splitNames []string) string {
 	if inMap {
 		return subset
 	}
-	subset = generateSerializedData(currentSplitData, splitNames)
+	subset = poller.generateSerializedData(currentSplitData, splitNames)
 	updatedSubsets[key] = subset
 
 	// update cache
@@ -173,26 +173,30 @@ func (poller *Poller) getSerializedDataSubset(splitNames []string) string {
 func (poller *Poller) getUpdatedSerializedDataSubsets(newSplitData SplitData) map[string]string {
 	updatedSubsets := poller.getCachedSerializedDataSubsets()
 	for key := range updatedSubsets {
-		updatedSubsets[key] = generateSerializedData(newSplitData, strings.Split(key, "."))
+		updatedSubsets[key] = poller.generateSerializedData(newSplitData, strings.Split(key, "."))
 	}
 	return updatedSubsets
 }
 
 // generateSerializedData takes SplitData and generates a script tag
 // that saves the SplitData info to the window object of the browser
-func generateSerializedData(splitData SplitData, splitNames []string) string {
+func (poller *Poller) generateSerializedData(splitData SplitData, splitNames []string) string {
 	if reflect.DeepEqual(splitData, SplitData{}) {
 		return emptyCacheLoggingScript
 	}
 	splitNamesToSerializedData := map[string]string{}
+	splitsSubset := map[string]dtos.SplitDTO{}
 
 	// Serialize values for splits
-	for _, split := range splitData.Splits {
-		index := sort.SearchStrings(splitNames, split.Name)
-		splitIsInSplitNames := index < len(splitNames) && splitNames[index] == split.Name
-		// if the split is not in the splitNames array, do not serialize the split
-		if len(splitNames) > 0 && !splitIsInSplitNames {
-			continue
+	for name, split := range splitData.Splits {
+		if len(splitNames) > 0 {
+			index := sort.SearchStrings(splitNames, split.Name)
+			splitIsInSplitNames := index < len(splitNames) && splitNames[index] == split.Name
+			// if the split is not in the splitNames array, do not serialize the split
+			if !splitIsInSplitNames {
+				continue
+			}
+			splitsSubset[name] = split
 		}
 		marshalledSplit, _ := json.Marshal(split)
 		splitNamesToSerializedData[split.Name] = string(marshalledSplit)
@@ -200,17 +204,30 @@ func generateSerializedData(splitData SplitData, splitNames []string) string {
 
 	marshalledSplits, _ := json.Marshal(splitNamesToSerializedData)
 
+	segments := splitData.Segments
+	usingSegmentsCount := splitData.UsingSegmentsCount
+
+	// get segments and usingSegmentsCount for subset of splits
+	if len(splitNames) > 0 {
+		err := error(nil)
+		binding := poller.splitio
+		segments, usingSegmentsCount, err = binding.GetSegmentsForSplits(splitsSubset)
+		if err != nil {
+			return emptyCacheLoggingScript
+		}
+	}
+
 	segmentsData := map[string]string{}
 
 	// Serialize values for segments
-	for _, segment := range splitData.Segments {
+	for _, segment := range segments {
 		marshalledSegment, _ := json.Marshal(segment)
 		segmentsData[segment.Name] = string(marshalledSegment)
 	}
 
 	marshalledSegments, _ := json.Marshal(segmentsData)
 
-	splitCachePreload := &SplitCachePreload{splitData.Since, splitData.UsingSegmentsCount, string(marshalledSplits), string(marshalledSegments)}
+	splitCachePreload := &SplitCachePreload{splitData.Since, usingSegmentsCount, string(marshalledSplits), string(marshalledSegments)}
 
 	return fmt.Sprintf(formattedLoggingScript, splitCachePreload.SplitsData, splitCachePreload.Since, splitCachePreload.SegmentsData, splitCachePreload.UsingSegmentsCount)
 }
