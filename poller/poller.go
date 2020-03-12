@@ -186,10 +186,11 @@ func (poller *Poller) generateSerializedData(splitData SplitData, splitNames []s
 	}
 	splitNamesToSerializedData := map[string]string{}
 	splitsSubset := map[string]dtos.SplitDTO{}
+	serializingASubsetOfSplits := len(splitNames) > 0
 
 	// Serialize values for splits
 	for name, split := range splitData.Splits {
-		if len(splitNames) > 0 {
+		if serializingASubsetOfSplits {
 			index := sort.SearchStrings(splitNames, split.Name)
 			splitIsInSplitNames := index < len(splitNames) && splitNames[index] == split.Name
 			// if the split is not in the splitNames array, do not serialize the split
@@ -208,7 +209,7 @@ func (poller *Poller) generateSerializedData(splitData SplitData, splitNames []s
 	usingSegmentsCount := splitData.UsingSegmentsCount
 
 	// get segments and usingSegmentsCount for subset of splits
-	if len(splitNames) > 0 {
+	if serializingASubsetOfSplits {
 		err := error(nil)
 		binding := poller.splitio
 		segments, usingSegmentsCount, err = binding.GetSegmentsForSplits(splitsSubset)
