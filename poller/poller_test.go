@@ -7,7 +7,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/godaddy/split-go-serializer/v2/api"
+	"github.com/godaddy/split-go-serializer/v3/api"
 	"github.com/splitio/go-client/splitio/service/dtos"
 	"github.com/stretchr/testify/assert"
 )
