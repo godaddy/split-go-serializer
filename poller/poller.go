@@ -22,7 +22,7 @@ const formattedLoggingScript = `<script>window.__splitCachePreload = { splitsDat
 type Fetcher interface {
 	Start()
 	Stop()
-	GetSerializedData() string
+	GetSerializedData(splitNames []string) string
 }
 
 // Poller implements Fetcher and contains cache pointer, splitio, and required info to interact with aplitio api
