@@ -2,12 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v3.0.0"></a>
+## [v3.0.0](github.com/godaddy/split-go-serializer/compare/v2.0.0...v3.0.0) (2020-03-18)
+
+### Chore
+
+* **ci:** use circleci instead of travis ([#16](github.com/godaddy/split-go-serializer/issues/16))
+
+### Feat
+
+* **module:** major change ([#22](github.com/godaddy/split-go-serializer/issues/22))
+
+### Fix
+
+* **circleci:** fix test command ([#17](github.com/godaddy/split-go-serializer/issues/17))
+
+
 <a name="v2.0.0"></a>
 ## [v2.0.0](github.com/godaddy/split-go-serializer/compare/v1.0.2...v2.0.0) (2020-01-16)
 
 ### Chore
 
 * **mod:** update to v2 ([#15](github.com/godaddy/split-go-serializer/issues/15))
+* **release:** 2.0.0
 * **release:** 2.0.0
 
 ### Refactor
