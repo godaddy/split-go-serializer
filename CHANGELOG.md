@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 ### Chore
 
 * **ci:** use circleci instead of travis ([#16](github.com/godaddy/split-go-serializer/issues/16))
+* **release:** 3.0.0
 
 ### Feat
 
@@ -15,6 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fix
 
+* **Fetcher:** update method to have a string list parameter ([#23](github.com/godaddy/split-go-serializer/issues/23))
 * **circleci:** fix test command ([#17](github.com/godaddy/split-go-serializer/issues/17))
 
 
