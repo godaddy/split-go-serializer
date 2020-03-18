@@ -23,20 +23,17 @@ A Go module which fetches split definitions and segments from Split.io and seria
 
 Use this Go module in your server-side Go environment. The serializer exposes:
 1. a `Poller` that periodically requests raw experiment configuration data from Split.io. Requests happen in the background and the poller caches the latest data in local memory.
-1. a `Serializer` that reads from the poller's cache, serializes the data, and returns it in a script to be injected into a client's HTML.
 
 ### Instantiation
 
-Create an instance of `Poller` and `Serializer` by importing the `poller` and `serializer` package of this module and calling the `NewPoller` and `NewSerializer` function with some parameters :
+Create an instance of `Poller` by importing the `poller` package of this module and calling the `NewPoller` function with some parameters :
 
 ```go
 import (
     "github.com/godaddy/split-go-serializer/poller"
-    "github.com/godaddy/split-go-serializer/serializer"
 )
 
 poller := poller.NewPoller("YOUR_API_KEY", 600, false, nil)
-serializer := serializer.NewSerializer(poller)
 ```
 
 The following option properties are available to the `Poller`:
@@ -73,14 +70,20 @@ poller.Stop()
 
 The poller sends an error message to `poller.Error` channel when getting errors from the Split.io API.
 
-#### getSerializedData
+#### GetSerializedData
 
-`getSerializedData` will read the latest data from the cache and return a script
+`GetSerializedData` will read the latest data from the cache and return a script
 that adds serialized data to the `window.__splitCachePreload` object. The
 serialized data will be used to determine cohort allocations.
 
+`GetSerializedData` accepts the following arguments:
+
+| Property                      | Description |
+|-------------------------------|-------------|
+| splitNames | Array of strings that, if non-empty, filters the `splitsData` |
+
 ```go
-serializedDataScript := serializer.GetSerializedData()
+serializedDataScript := poller.GetSerializedData([]string{})
 fmt.Println(serializedDataScript)
 
 //<script>
@@ -88,6 +91,22 @@ fmt.Println(serializedDataScript)
 //    splitsData: {
 //      "split-1-name":"{\"name\":\"split-1-name\",\"status\":\"bar\"}",
 //      "split-2-name":"{\"name\":\"split-2-name\",\"status\":\"baz\"}"
+//    },
+//    since: 1,
+//    segmentsData: {
+//       "test-segment":"{\"name\":\"test-segment\",\"added\":[\"foo\",\"bar\"],\"removed\":null,\"since\":20,\"till\":20}"
+//    },
+//    usingSegmentsCount: 2
+//  }
+//</script>
+
+serializedDataScript = poller.GetSerializedData([]string{"split-1-name"})
+fmt.Println(serializedDataScript)
+
+//<script>
+//  window.__splitCachePreload = {
+//    splitsData: {
+//      "split-1-name":"{\"name\":\"split-1-name\",\"status\":\"bar\"}"
 //    },
 //    since: 1,
 //    segmentsData: {
