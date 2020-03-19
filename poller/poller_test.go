@@ -491,6 +491,34 @@ func TestGenerateSerializedDataWithNonEmptySplitNames(t *testing.T) {
 	assert.Equal(t, result, expectedLoggingScript)
 }
 
+func TestGenerateSerializedDataWithNonEmptySplitNamesAndFalseSerializeSegments(t *testing.T) {
+	// Arrange
+	getSegments := false
+	emptySegmentsData := map[string]dtos.SegmentChangesDTO{}
+	zeroUsingSegmentsCount := 0
+
+	mockSince := int64(1)
+	poller := NewPoller(testKey, 1, getSegments,
+		&mockSplitio{mockUsingSegmentsCount: 200, getSplitValid: true, getSegmentValid: true, deterministic: true})
+	splitNames := []string{"mock-split-2"}
+	mockSplitData := SplitData{
+		Splits:             mockMultipleSplits,
+		Since:              mockSince,
+		Segments:           emptySegmentsData,
+		UsingSegmentsCount: zeroUsingSegmentsCount,
+	}
+
+	// Act
+	result := poller.generateSerializedData(mockSplitData, splitNames)
+
+	// Validate that returned logging script only contains SplitData for splits passed in,
+	// and that there is an empty segmentsData and zero usingSegmentsCount
+	stringSplits := `{"mock-split-2":"{\"changeNumber\":0,\"trafficTypeName\":\"\",\"name\":\"mock-split-2\",\"trafficAllocation\":0,\"trafficAllocationSeed\":0,\"seed\":0,\"status\":\"mock-status-2\",\"killed\":false,\"defaultTreatment\":\"\",\"algo\":0,\"conditions\":null,\"configurations\":null}"}`
+	expectedSegmentsData := "{}"
+	expectedLoggingScript := fmt.Sprintf(formattedLoggingScript, stringSplits, mockSince, expectedSegmentsData, zeroUsingSegmentsCount)
+	assert.Equal(t, result, expectedLoggingScript)
+}
+
 func TestGenerateSerializedDataWithNonEmptySplitNamesAndInvalidSegmentsReturnsEmptyScript(t *testing.T) {
 	// Arrange
 	getSegmentValid := false

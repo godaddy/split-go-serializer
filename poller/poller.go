@@ -209,7 +209,7 @@ func (poller *Poller) generateSerializedData(splitData SplitData, splitNames []s
 	usingSegmentsCount := splitData.UsingSegmentsCount
 
 	// get segments and usingSegmentsCount for subset of splits
-	if serializingASubsetOfSplits {
+	if poller.serializeSegments && serializingASubsetOfSplits {
 		err := error(nil)
 		binding := poller.splitio
 		segments, usingSegmentsCount, err = binding.GetSegmentsForSplits(splitsSubset)
