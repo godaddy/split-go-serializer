@@ -2,8 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v3.0.2"></a>
+## [v3.0.2](github.com/godaddy/split-go-serializer/compare/v3.0.1...v3.0.2) (2020-03-20)
+
+### Fix
+
+* **generateSerializedData:** for subsets, do not serialize segments if serializeSegments is false ([#24](github.com/godaddy/split-go-serializer/issues/24))
+
+
 <a name="v3.0.1"></a>
 ## [v3.0.1](github.com/godaddy/split-go-serializer/compare/v3.0.0...v3.0.1) (2020-03-18)
+
+### Chore
+
+* **release:** 3.0.1
 
 
 <a name="v3.0.0"></a>
