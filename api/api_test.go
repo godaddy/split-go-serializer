@@ -307,7 +307,7 @@ func TestGetSplitsReturnsDecodeError(t *testing.T) {
 func TestGetSegmentNamesInUseValid(t *testing.T) {
 	// Arrange
 	conditions := []dtos.ConditionDTO{}
-	json.Unmarshal([]byte(mockConditions), &conditions)
+	_ = json.Unmarshal([]byte(mockConditions), &conditions)
 
 	// Act
 	segmentNames := getSegmentNamesInUse(conditions)
@@ -390,7 +390,7 @@ func TestGetSegmentsForSplitsReturnsGetSplitError(t *testing.T) {
 	}))
 	defer testServer.Close()
 	conditions := []dtos.ConditionDTO{}
-	json.Unmarshal([]byte(mockConditions), &conditions)
+	_ = json.Unmarshal([]byte(mockConditions), &conditions)
 	split := dtos.SplitDTO{Name: "mock-split", Conditions: conditions}
 	splits := map[string]dtos.SplitDTO{
 		"mock-split": split,
@@ -412,7 +412,7 @@ func TestGetSegmentsForSplitsReturnsValid(t *testing.T) {
 	testServer := httptest.NewServer(handler)
 	defer testServer.Close()
 	conditions := []dtos.ConditionDTO{}
-	json.Unmarshal([]byte(mockConditions), &conditions)
+	_ = json.Unmarshal([]byte(mockConditions), &conditions)
 	split := dtos.SplitDTO{Name: "mock-split", Conditions: conditions}
 	splits := map[string]dtos.SplitDTO{
 		"mock-split": split,
