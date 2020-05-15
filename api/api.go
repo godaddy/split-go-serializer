@@ -117,12 +117,12 @@ func (binding *SplitioAPIBinding) httpGet(path string, since int64) (map[string]
 		Get(fmt.Sprintf("%s/%s", binding.splitioAPIUri, path))
 
 	if err != nil {
-		err = fmt.Errorf("Http get request error: %s", err)
+		err = fmt.Errorf("http get request error: %s", err)
 		return map[string]interface{}{}, err
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		err = fmt.Errorf("Non-OK HTTP status: %s", resp.Status())
+		err = fmt.Errorf("non-OK HTTP status: %s", resp.Status())
 		return map[string]interface{}{}, err
 	}
 
@@ -131,7 +131,7 @@ func (binding *SplitioAPIBinding) httpGet(path string, since int64) (map[string]
 	decoder.UseNumber()
 	err = decoder.Decode(&data)
 	if err != nil {
-		err = fmt.Errorf("Decode error: %s", err)
+		err = fmt.Errorf("decode error: %s", err)
 		return map[string]interface{}{}, err
 	}
 

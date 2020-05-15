@@ -125,7 +125,7 @@ func TestHttpGetReturnsErrorOnNonOKResponse(t *testing.T) {
 	result, err := apiBinding.httpGet(mockPath, mockSince)
 
 	// Validate that httpGet function returns unsuccessful error
-	assert.EqualError(t, err, "Non-OK HTTP status: 404 Not Found")
+	assert.EqualError(t, err, "non-OK HTTP status: 404 Not Found")
 	assert.Equal(t, result, map[string]interface{}{})
 }
 
@@ -138,7 +138,7 @@ func TestHttpGetReturnsNewRequestError(t *testing.T) {
 	result, err := apiBinding.httpGet(mockPath, mockSince)
 
 	// Validate that httpGet function returns new request error
-	assert.EqualError(t, err, "Http get request error: parse :/mockPath: missing protocol scheme")
+	assert.EqualError(t, err, "http get request error: parse :/mockPath: missing protocol scheme")
 	assert.Equal(t, result, map[string]interface{}{})
 }
 
@@ -154,7 +154,7 @@ func TestHttpGetReturnsDecodeError(t *testing.T) {
 	result, err := apiBinding.httpGet(mockPath, mockSince)
 
 	// Validate that httpGet function returns new request error
-	assert.EqualError(t, err, "Decode error: invalid character 'i' looking for beginning of value")
+	assert.EqualError(t, err, "decode error: invalid character 'i' looking for beginning of value")
 	assert.Equal(t, result, map[string]interface{}{})
 }
 
@@ -191,7 +191,7 @@ func TestGetAllChangesReturnsHTTPError(t *testing.T) {
 	changes, since, err := binding.getAllChanges(mockPath)
 
 	// Valide that getAllChanges return getHTTP error
-	assert.EqualError(t, err, "Non-OK HTTP status: 404 Not Found")
+	assert.EqualError(t, err, "non-OK HTTP status: 404 Not Found")
 	assert.Nil(t, changes)
 	assert.Equal(t, since, int64(0))
 }
@@ -284,7 +284,7 @@ func TestGetSplitsReturnsGetAllChangesError(t *testing.T) {
 	// Validate that GetSplits returns error from getAllChanges
 	assert.Equal(t, since, int64(0))
 	assert.Nil(t, splits)
-	assert.EqualError(t, err, "Non-OK HTTP status: 401 Unauthorized")
+	assert.EqualError(t, err, "non-OK HTTP status: 401 Unauthorized")
 }
 
 func TestGetSplitsReturnsDecodeError(t *testing.T) {
@@ -379,7 +379,7 @@ func TestGetSegmentReturnsGetAllChangesError(t *testing.T) {
 	segment, err := result.getSegment("mock-segment-name")
 
 	// Validate that GetSegment function returns GetAllChanges error
-	assert.EqualError(t, err, "Non-OK HTTP status: 401 Unauthorized")
+	assert.EqualError(t, err, "non-OK HTTP status: 401 Unauthorized")
 	assert.Equal(t, segment, dtos.SegmentChangesDTO{})
 }
 
