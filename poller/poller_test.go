@@ -56,8 +56,8 @@ func (splitio *mockSplitio) GetSplits() (map[string]dtos.SplitDTO, int64, error)
 		mockSplit := dtos.SplitDTO{Name: "mock-split"}
 		mockSplitMap := map[string]dtos.SplitDTO{
 			"mock-split":   mockSplit,
-			"mock-split-2": dtos.SplitDTO{Name: "mock-split-2"},
-			"mock-split-3": dtos.SplitDTO{Name: "mock-split-3"},
+			"mock-split-2": {Name: "mock-split-2"},
+			"mock-split-3": {Name: "mock-split-3"},
 		}
 		if !splitio.deterministic {
 			splitio.mockSince++
