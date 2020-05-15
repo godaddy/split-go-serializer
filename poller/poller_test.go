@@ -569,7 +569,7 @@ func TestGenerateSerializedDataMarshalEmptyCache(t *testing.T) {
 	result := poller.generateSerializedData(SplitData{}, []string{})
 
 	// Validate that returned logging script contains a valid SplitData
-	expectedLoggingScript := fmt.Sprintf(emptyCacheLoggingScript)
+	expectedLoggingScript := fmt.Sprint(emptyCacheLoggingScript)
 	assert.Equal(t, result, expectedLoggingScript)
 }
 
@@ -582,6 +582,6 @@ func TestGenerateSerializedDataSplitError(t *testing.T) {
 	result := poller.generateSerializedData(SplitData{}, []string{})
 
 	// Validate that returned logging script contains a valid SplitData
-	expectedLoggingScript := fmt.Sprintf(emptyCacheLoggingScript)
+	expectedLoggingScript := fmt.Sprint(emptyCacheLoggingScript)
 	assert.Equal(t, result, expectedLoggingScript)
 }
