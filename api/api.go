@@ -95,7 +95,6 @@ func (binding *SplitioAPIBinding) GetSegmentsForSplits(splits map[string]dtos.Sp
 			return segments, 0, err
 		}
 		segments[segment.Name] = segment
-
 	}
 
 	return segments, usingSegmentsCount, nil
@@ -176,7 +175,6 @@ func getSegmentNamesInUse(conditions []dtos.ConditionDTO) map[string]bool {
 	}
 
 	return segmentNames
-
 }
 
 // Get info for single segment
@@ -211,7 +209,6 @@ func (binding *SplitioAPIBinding) getSegment(segmentName string) (dtos.SegmentCh
 		for _, id := range segmentChanges.Removed {
 			delete(addedMap, id)
 		}
-
 	}
 
 	ids := []string{}
@@ -227,5 +224,4 @@ func (binding *SplitioAPIBinding) getSegment(segmentName string) (dtos.SegmentCh
 	}
 
 	return segment, nil
-
 }
