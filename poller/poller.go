@@ -108,7 +108,6 @@ func (poller *Poller) pollForChanges() {
 		serializedDataSubsets: poller.getUpdatedSerializedDataSubsets(splitData),
 	}
 	atomic.StorePointer(&poller.cache, unsafe.Pointer(&updatedCache))
-
 }
 
 // GetSerializedData returns serialized data cache results
