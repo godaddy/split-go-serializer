@@ -252,13 +252,13 @@ func TestJobsCanRunTwiceAfterStop(t *testing.T) {
 	result.Stop()
 }
 
-func TestPollforChangesReturnsGetSplitsError(t *testing.T) {
+func HelperTestPollforChangesReturnsError(t *testing.T, getSplitValid bool) (*Poller, error) {
 	// Arrange
 	pollingRateSeconds := 1
 
-	//Act
+	// Act
 	result := NewPoller(testKey, pollingRateSeconds, serializeSegments,
-		&mockSplitio{getSplitValid: false, getSegmentValid: false})
+		&mockSplitio{getSplitValid: getSplitValid, getSegmentValid: false})
 	hasErr := false
 	var err error
 
@@ -277,35 +277,18 @@ func TestPollforChangesReturnsGetSplitsError(t *testing.T) {
 	assert.Equal(t, cacheAfterError.Since, int64(0))
 	assert.Equal(t, cacheAfterError.UsingSegmentsCount, 0)
 	assert.True(t, hasErr)
+
+	return result, err
+}
+
+func TestPollforChangesReturnsGetSplitsError(t *testing.T) {
+	result, err := HelperTestPollforChangesReturnsError(t, false)
 	assert.EqualError(t, err, "Error from splitio API when getting splits")
 	result.Stop()
 }
 
 func TestPollforChangesReturnsGetSegmentsError(t *testing.T) {
-	// Arrange
-	pollingRateSeconds := 1
-
-	//Act
-	result := NewPoller(testKey, pollingRateSeconds, serializeSegments,
-		&mockSplitio{getSplitValid: true, getSegmentValid: false})
-	hasErr := false
-	var err error
-
-	// Validate that error is received when getSegments returns error and cache isn't updated
-	cacheBeforeStart := result.getSplitData()
-	assert.Equal(t, cacheBeforeStart, SplitData{})
-	assert.Equal(t, cacheBeforeStart.Since, int64(0))
-	assert.Equal(t, cacheBeforeStart.UsingSegmentsCount, 0)
-	go result.jobs()
-	err = <-result.Error
-	if err != nil {
-		hasErr = true
-	}
-	cacheAfterError := result.getSplitData()
-	assert.Equal(t, cacheAfterError, SplitData{})
-	assert.Equal(t, cacheAfterError.Since, int64(0))
-	assert.Equal(t, cacheAfterError.UsingSegmentsCount, 0)
-	assert.True(t, hasErr)
+	result, err := HelperTestPollforChangesReturnsError(t, true)
 	assert.EqualError(t, err, "Error from splitio API when getting segments")
 	result.Stop()
 }
