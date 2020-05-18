@@ -138,7 +138,7 @@ func TestHttpGetReturnsNewRequestError(t *testing.T) {
 	result, err := apiBinding.httpGet(mockPath, mockSince)
 
 	// Validate that httpGet function returns new request error
-	assert.EqualError(t, err, "http get request error: parse \":/mockPath\": missing protocol scheme")
+	assert.Contains(t, err.Error(), "http get request error:")
 	assert.Equal(t, result, map[string]interface{}{})
 }
 
