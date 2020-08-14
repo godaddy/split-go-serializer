@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/mitchellh/mapstructure"
-	"github.com/splitio/go-client/splitio/service/dtos"
+	"github.com/splitio/go-split-commons/dtos"
 )
 
 const (
