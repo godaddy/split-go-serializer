@@ -2,8 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v3.0.3"></a>
+## [v3.0.3](github.com/godaddy/split-go-serializer/compare/v3.0.2...v3.0.3) (2020-08-14)
+
+### Chore
+
+* **splitio:** use go-split-commons for dtos ([#34](github.com/godaddy/split-go-serializer/issues/34))
+
+### Fix
+
+* **api_test:** update test to pass on circleci ([#33](github.com/godaddy/split-go-serializer/issues/33))
+
+### SA1006
+
+* printf-style function with dynamic format string and no further arguments should use print-style function instead (staticcheck) ([#30](github.com/godaddy/split-go-serializer/issues/30))
+
+### ST1005
+
+* error strings should not be capitalized (stylecheck) ([#27](github.com/godaddy/split-go-serializer/issues/27))
+
+
 <a name="v3.0.2"></a>
 ## [v3.0.2](github.com/godaddy/split-go-serializer/compare/v3.0.1...v3.0.2) (2020-03-20)
+
+### Chore
+
+* **release:** 3.0.2
 
 ### Fix
 
