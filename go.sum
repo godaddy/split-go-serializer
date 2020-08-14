@@ -6,10 +6,10 @@ github.com/mitchellh/mapstructure v1.1.2 h1:fmNYVwqnSfB9mZU6OS2O6GsXM+wcskZDuKQz
 github.com/mitchellh/mapstructure v1.1.2/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/splitio/go-client v0.0.0-20191128134938-937ae40ac509 h1:3Oe54eFkoI9wNT3T8o+iUfKUfdy/XFASSu4pJPTcRMA=
-github.com/splitio/go-client v0.0.0-20191128134938-937ae40ac509/go.mod h1:dJcPPOO+DlFMELdWAqGUcHTXGvGw0km+UEZJie7Hejk=
 github.com/splitio/go-split-commons v0.0.0-20200811223902-b5e222a48d88 h1:2yU33Lh9PhtdJCNj6mZLstvc3osR4mQz9Li55spe6tw=
 github.com/splitio/go-split-commons v0.0.0-20200811223902-b5e222a48d88/go.mod h1:w1uWXr+HcRVJLeoVyZucm+r3dt0W7zj7Sa9H2TCB3kA=
+github.com/splitio/go-toolkit v0.0.0-20200814165607-0ea8e97fe025 h1:ommtMsnUMmkW30N9Cd0z4JxThEQbL6Puu8r/MD3PZoY=
+github.com/splitio/go-toolkit v0.0.0-20200814165607-0ea8e97fe025/go.mod h1:Oygm4Hgf3KotB5ZAaXIluLk5HgH2qu723HEPNvszJi8=
 github.com/stretchr/objx v0.1.0 h1:4G4v2dO3VZwixGIRoQ5Lfboy6nUhCyYzaqnIAPPhYs4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
