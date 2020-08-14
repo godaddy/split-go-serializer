@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/splitio/go-client/splitio/service/dtos"
+	"github.com/splitio/go-split-commons/dtos"
 	"github.com/stretchr/testify/assert"
 )
 
